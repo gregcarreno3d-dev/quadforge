@@ -467,6 +467,10 @@ def _clean_and_cut_to_half(proxy_mesh, plan: sym.SymmetryPlan, settings: RemeshS
     """Return the mesh that will be sent to the engine (cleaned, and cut if symmetric)."""
     bm = bmesh.new()
     try:
+        if settings.clean_input:
+            # STL files from CAD often hold faces that collapse to a line or a point once the vertices are welded; Blender's
+            # remove_doubles can hang on them, so they are dropped first
+            proxy_mesh.validate()
         bm.from_mesh(proxy_mesh)
         if settings.clean_input:
             bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=DUPLICATE_VERTEX_DISTANCE * diagonal)
@@ -655,7 +659,10 @@ def _collapse_slivers(mesh) -> float:
         short = [edge for edge, length in zip(bm.edges, lengths) if length < limit]
         if len(short) < SLIVER_MIN_SHARE * len(bm.edges):
             return 0.0   # a few tiny edges are normal; only real strips are worth cleaning
+        open_before = sum(1 for edge in bm.edges if not edge.is_manifold)
         bmesh.ops.collapse(bm, edges=short)
+        if sum(1 for edge in bm.edges if not edge.is_manifold) > open_before:
+            return -1.0   # the collapse tore the surface open (bevel corners): keep the strips instead of holes
         loose = [v for v in bm.verts if not v.link_faces]
         if loose:
             bmesh.ops.delete(bm, geom=loose, context="VERTS")
@@ -769,16 +776,21 @@ def _remesh_once(context, mesh, plan: sym.SymmetryPlan, settings: RemeshSettings
                     yield from get_backend().remesh_steps(context, work_object, request)
             if keep_input is not None:
                 vanished = _collapse_slivers(work_object.data)
+                if vanished < 0.0:
+                    vanished = 0.0
                 if vanished > SLIVER_RETARGET_FRACTION:
+                    first_pass = work_object.data
                     # thin bevels ate part of the face budget: run again asking for more so the final count matches
                     bigger = dataclasses.replace(request, target_faces=int(request.target_faces / max(0.4, 1.0 - vanished)),
                                                  engine_info={})
                     work_object.data = keep_input
                     keep_input = None
                     yield from get_backend().remesh_steps(context, work_object, bigger)
-                    _collapse_slivers(work_object.data)
-                    request.engine_info.clear()
-                    request.engine_info.update(bigger.engine_info)
+                    if _collapse_slivers(work_object.data) < 0.0:
+                        work_object.data = first_pass   # the bigger run tore at a bevel corner: keep the first, sound result
+                    else:
+                        request.engine_info.clear()
+                        request.engine_info.update(bigger.engine_info)
         except BackendError as error:
             raise PipelineError(str(error)) from error
         remeshed = work_object.data
