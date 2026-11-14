@@ -1,6 +1,6 @@
 # QuadForge
 
-A Blender add-on for fast quad and triangle remeshing, powered by **FORGE**, its own engine written in Rust. Version **0.16.4**.
+A Blender add-on for fast quad and triangle remeshing, powered by **FORGE**, its own engine written in Rust. Version **0.16.5**.
 It handles organic sculpts and, in preview, CAD / STL parts (3D printing, mechanical): it can split a whole model into surfaces and keep chamfers, bevels and borders.
 
 ![CAD parts with QuadForge 0.16.3. Top: surface analysis (planes grey, cylinders green, spheres purple, revolution teal, chamfers orange, bevels blue). Bottom: the Hard Surface remesh of the same parts at about 4K quads, with surface analysis on](docs/images/cad_0.16.jpg)
@@ -58,7 +58,7 @@ Rust program (`engine-rs/`; it was C++17 until 0.14, see the changelog). In shor
 5. **Extract and refine.** Each vertex snaps to its nearest lattice node, vertices that land on the same node merge
    into a cell, and faces are traced around the cell graph. Every cell is split 2×2, relaxed on the surface, snapped to
    the marked creases, and the worst quads are repaired. The lattice spacing is corrected up to three times to land
-   within a few percent of the requested count.
+   within a few percent of the requested count. With **Quality Attempts** above 1 (Advanced) the whole run repeats with a slightly different count and the tidiest layout is kept.
 6. **Finish (Python).** Sliver quads on thin bevels are collapsed, neighbouring leftover triangles are joined into quads
    (Hard Surface), the symmetry cut is mirrored and welded, and UV maps, Face Sets, mask and materials are carried
    over. Last comes the **shading**: **Hard Surface** leaves the result **Flat**, so no smoothing changes the look of

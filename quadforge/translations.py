@@ -173,6 +173,8 @@ SPANISH_INTERFACE = {
     "Minimum Feature Size": "Tamaño mínimo de detalle",
     "Keep Right Angles": "Conservar ángulos rectos",
     "Shading": "Sombreado",
+    "Quality Attempts": "Intentos de calidad",
+    "Remesh this many times, each with a slightly different face count, and keep the layout with the fewest triangles and squeezed quads. Each attempt takes as long as one remesh; 1 is the fastest. Helps a little on parts without symmetry": "Remalla varias veces, cada una con un número de caras algo distinto, y conserva la distribución con menos triángulos y quads aplastados. Cada intento tarda lo mismo que un remallado; 1 es lo más rápido. Ayuda un poco en piezas sin simetría",
     "Smooth with Sharp Edges": "Suave con bordes duros",
     "Smooth": "Suave",
     "Flat": "Plano",

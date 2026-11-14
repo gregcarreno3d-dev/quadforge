@@ -487,6 +487,7 @@ class QUADFORGE_PT_advanced(_QuadForgePanel, bpy.types.Panel):
         layout = self.layout
         _prepare_layout(layout)
         settings = context.scene.quadforge
+        layout.prop(settings, "quality_attempts")
         layout.prop(settings, "shading")
         layout.prop(settings, "clean_input")
         layout.prop(settings, "hide_original")

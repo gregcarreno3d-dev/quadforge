@@ -1,6 +1,6 @@
 # QuadForge: architecture and behaviour, written for AI assistants
 
-Version described: **0.16.4** (FORGE engine in Rust since 0.15.0; chamfer/bevel detector since 0.15.1; whole-model surface analysis since 0.16.0). Licence: GPL-3.0-or-later. Everything here was checked against the code in this
+Version described: **0.16.5** (FORGE engine in Rust since 0.15.0; chamfer/bevel detector since 0.15.1; whole-model surface analysis since 0.16.0). Licence: GPL-3.0-or-later. Everything here was checked against the code in this
 repository. If this file and the code disagree, **the code wins**; please fix this file.
 
 This document is meant to be loaded whole into a model's context. It is dense and flat on purpose: sections are
@@ -284,6 +284,7 @@ Full description: `quadforge/docs/CHAMFER_BEVEL_DETECTOR.md`. Summary for code r
 | `transfer_uvs`, `transfer_zones` | UV maps, Face Sets and mask copied to the result |
 | `preserve_boundary` | keep open borders as lines |
 | `shading` | AUTO / SMOOTH / FLAT |
+| `quality_attempts` | 1..5: `_remesh_with_engine` runs `_remesh_once` that many times with the target scaled by `ATTEMPT_SCALES` and keeps the lowest `_layout_flaws` (triangles + quads with a corner sine below 0.3) within 6 % of the count; QUADS with hard edges only |
 
 Surface profiles (`presets.SURFACE_PROFILES`): **Hard Surface** (hard edges from about 30°, right angles on, snapping
 on, Detail on Curves off, `use_surface_analysis` on, `shading` FLAT) and **Organic** (hard-edge detection off, Detail on Curves Medium,

@@ -305,6 +305,14 @@ class QuadForgeProperties(bpy.types.PropertyGroup):
         default="AUTO",
         update=_unmark_surface,
     )
+    quality_attempts: IntProperty(
+        name="Quality Attempts",
+        description="Remesh this many times, each with a slightly different face count, and keep the layout with the "
+                    "fewest triangles and squeezed quads. Each attempt takes as long as one remesh; 1 is the fastest. "
+                    "Helps a little on parts without symmetry",
+        default=1, min=1, max=5,
+        update=_unmark_surface,
+    )
     hide_original: BoolProperty(
         name="Hide Original",
         description="Hide the original object after remeshing (it is never deleted)",
@@ -357,6 +365,7 @@ class QuadForgeProperties(bpy.types.PropertyGroup):
             min_feature_size=self.min_feature_size,
             keep_right_angles=self.keep_right_angles,
             shading=self.shading,
+            quality_attempts=self.quality_attempts,
             preserve_boundary=self.preserve_boundary,
             use_materials=self.use_materials,
             use_face_sets=self.use_face_sets,

@@ -32,5 +32,15 @@ check((area < 0.05 * area.mean()).mean() < 0.01, "almost no squeezed quads (%.2f
 check(st["non_manifold_edges"] == 0 and st["border_edges"] == 0, "closed manifold result")
 check(abs(st["faces"] - 4000) / 4000 < 0.2, "face count near the target (%d)" % st["faces"])
 check(st["quads"] / st["faces"] > 0.9, "mostly quads")
+# quality attempts: three tries, the tidiest kept, still a closed manifold near the target
+s2 = M.pipeline.RemeshSettings(); s2.output = "QUADS"; s2.target_quads = 4000; s2.hide_original = False
+s2.use_sharp_angle = True; s2.sharp_angle_degrees = 30.0; s2.curvature_detail = "OFF"; s2.quality_attempts = 3
+r2 = M.pipeline.run(bpy.context, obj, s2)
+st2 = r2.levels[0].stats
+check(st2["non_manifold_edges"] == 0 and st2["border_edges"] == 0, "quality attempts 3: closed manifold result")
+check(abs(st2["faces"] - 4000) / 4000 < 0.1, "quality attempts 3: face count near the target (%d)" % st2["faces"])
+flaws_one = M.pipeline._layout_flaws(r.levels[0].object.data)
+flaws_three = M.pipeline._layout_flaws(r2.levels[0].object.data)
+check(flaws_three <= flaws_one + 2, "quality attempts 3 are not messier than one (%d vs %d flaws)" % (flaws_three, flaws_one))
 print("ALL PASSED" if not fails else "%d FAILED" % len(fails))
 sys.exit(1 if fails else 0)

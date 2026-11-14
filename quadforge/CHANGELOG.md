@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.5
+- **Quality Attempts (Advanced, 1 to 5, default 1):** remeshes the part several times, each with a requested face count a little different (up to 3 % either way), and keeps the layout with the fewest triangles and squeezed quads (corner sine below 0.3) that stays within 6 % of the request. The quad layout reacts to small changes in an uneven way, so the best of a few is tidier. Measured on five CAD test parts at 10K quads, bad faces dropped on parts without symmetry (Ver-01 1.7 % to 1.2 %, PlateV01 3.5 % to 3.2 %) and did not drop on the others; with symmetry the attempts are scored on one half before the mirror, so the gain is not reliable there. Each attempt costs one remesh of time, so it is off by default.
+- Documented the measured defects of the Hard Surface remesh and the post-processing and guide experiments that did not help (STATUS_AND_LIMITS).
+
 ## 0.16.4
 - Surface analysis: a chamfer triangle that meets a plain surface almost tangentially (under 6°) goes back to that surface. Fixes the small orange rectangle that a seam of the STL left on the wall of Ver-03.
 

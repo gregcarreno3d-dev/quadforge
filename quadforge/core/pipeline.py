@@ -96,6 +96,7 @@ class RemeshSettings:
     use_existing_sharp: bool = True
     soft_bevels: bool = True                 # keep the rows along rounded bevels made of shallow facets
     surface_band_min_cells: float = 1.0      # bands narrower than this many quad lengths do not get hard sides
+    quality_attempts: int = 1                # remesh this many slightly different times and keep the cleanest (Hard Surface)
     surface_band_sides: bool = True          # with the analysis: keep both sides of every chamfer / bevel as hard edges
     use_surface_analysis: bool = False       # experimental: surface borders and chamfer/bevel sides become hard edges (CAD meshes)
     relax_quads: bool = True         # even out badly shaped quads and put them back on the surface
@@ -667,11 +668,73 @@ def _collapse_slivers(mesh) -> float:
         bm.free()
 
 
+ATTEMPT_SCALES = (1.0, 0.985, 1.015, 0.97, 1.03)   # the requested count of each attempt; the quad layout changes a little with it
+BAD_QUAD_SINE = 0.3                                # a quad with a corner whose sine is below this counts as a flaw
+COUNT_TOLERANCE = 0.06                             # the engine itself lands within 4 to 6 percent: only beyond that is a count penalised
+
+
+def _layout_flaws(mesh) -> int:
+    """Triangles plus quads with a badly squeezed corner: how untidy a remeshed layout is (lower is better)."""
+    face_count = len(mesh.polygons)
+    if face_count == 0:
+        return 0
+    totals = np.empty(face_count, dtype=np.int64)
+    mesh.polygons.foreach_get("loop_total", totals)
+    triangles = int(np.count_nonzero(totals == 3))
+    starts = np.cumsum(totals) - totals
+    quad_starts = starts[totals == 4]
+    if len(quad_starts) == 0:
+        return triangles
+    loop_vertices = np.empty(len(mesh.loops), dtype=np.int64)
+    mesh.loops.foreach_get("vertex_index", loop_vertices)
+    positions = np.empty(len(mesh.vertices) * 3, dtype=np.float64)
+    mesh.vertices.foreach_get("co", positions)
+    positions = positions.reshape(-1, 3)
+    corners = positions[loop_vertices[quad_starts[:, None] + np.arange(4)[None, :]]]      # (n, 4, 3)
+    worst = np.ones(len(quad_starts))
+    for corner in range(4):
+        before = corners[:, corner - 1] - corners[:, corner]
+        after = corners[:, (corner + 1) % 4] - corners[:, corner]
+        sine = np.linalg.norm(np.cross(before, after), axis=1) / (
+            np.linalg.norm(before, axis=1) * np.linalg.norm(after, axis=1) + 1e-30)
+        worst = np.minimum(worst, sine)
+    return triangles + int(np.count_nonzero(worst < BAD_QUAD_SINE))
+
+
 def _remesh_with_engine(context, mesh, plan: sym.SymmetryPlan, settings: RemeshSettings,
                         target_quads: int, hard_edge_count: int,
                         temp: TemporaryData, engine_progress=None, warnings=None, guides=None, fallback_density=None):
-    """Generator: yields while the engine works; returns the remeshed mesh."""
-    """Run the engine on ``mesh`` (a half if symmetric) and return the remeshed mesh."""
+    """Generator: yields while the engine works; returns the remeshed mesh.
+
+    With ``settings.quality_attempts`` above 1 (Hard Surface) the engine runs several times with a requested count a
+    little different each time, and the layout with the fewest flaws that stays near the requested count is kept: the
+    quad layout reacts to small changes in an uneven way, so the best of a few is clearly tidier than the first.
+    """
+    attempts = max(1, min(len(ATTEMPT_SCALES), int(settings.quality_attempts)))
+    if attempts <= 1 or settings.output != "QUADS" or hard_edge_count <= 0:
+        return (yield from _remesh_once(context, mesh, plan, settings, target_quads, hard_edge_count, temp,
+                                        engine_progress, warnings, guides, fallback_density))
+    best, best_score, best_warnings = None, None, []
+    for attempt in range(attempts):
+        trial_warnings = []
+        trial_input = temp.track_mesh(mesh.copy())
+        result = yield from _remesh_once(context, trial_input, plan, settings,
+                                         max(MIN_FACES_PER_PIECE, round(target_quads * ATTEMPT_SCALES[attempt])),
+                                         hard_edge_count, temp, engine_progress, trial_warnings, guides, fallback_density)
+        faces = len(result.polygons) * plan.engine_pieces
+        deviation = abs(faces - target_quads) / max(1, target_quads)
+        score = _layout_flaws(result) + 20.0 * max(0.0, deviation - COUNT_TOLERANCE) * faces
+        if best_score is None or score < best_score:
+            best, best_score, best_warnings = result, score, trial_warnings
+    if warnings is not None:
+        warnings.extend(best_warnings)
+    return best
+
+
+def _remesh_once(context, mesh, plan: sym.SymmetryPlan, settings: RemeshSettings,
+                 target_quads: int, hard_edge_count: int,
+                 temp: TemporaryData, engine_progress=None, warnings=None, guides=None, fallback_density=None):
+    """One engine run on ``mesh`` (a half if symmetric); returns the remeshed mesh."""
     quads_for_this_piece = max(MIN_FACES_PER_PIECE, round(target_quads / plan.engine_pieces))
     request = RemeshRequest(
         target_faces=int(quads_for_this_piece),

@@ -36,7 +36,7 @@
 
   <path class="arr" d="M832 114V150"/>
 
-  <text class="lab" x="30" y="166">B  FORGE ENGINE (Rust, separate process)</text>
+  <text class="lab" x="30" y="166">B  FORGE ENGINE (Rust, separate process); repeated for the best of N when Quality Attempts is above 1</text>
   <rect class="band" x="20" y="174" width="920" height="318" rx="10"/>
   <rect class="box cpp" x="34" y="190" width="200" height="64"/><text class="h" x="46" y="214">1  Repair</text><text class="s" x="46" y="232">manifold triangles,</text><text class="s" x="46" y="246">cap open borders</text>
   <rect class="box cpp" x="254" y="190" width="200" height="64"/><text class="h" x="266" y="214">2  Size field</text><text class="s" x="266" y="232">thickness, curvature,</text><text class="s" x="266" y="246">graded multiplier</text>

@@ -92,7 +92,8 @@ SURFACE_PROFILES = {
                     "right angles and edge snapping on) and uses even faces, without Detail on Curves. The result is shaded Flat, "
                     "so no smoothing changes the look of the surface.",
         values={"use_sharp_angle": True, "sharp_angle_degrees": 30.0, "smart_features": True,
-                "keep_right_angles": True, "curvature_detail": "OFF", "use_surface_analysis": True, "shading": "FLAT"},
+                "keep_right_angles": True, "curvature_detail": "OFF", "use_surface_analysis": True, "shading": "FLAT",
+                "quality_attempts": 1},
     ),
     "ORGANIC": SurfaceProfile(
         label="Soft Surface / Organic",
@@ -100,7 +101,8 @@ SURFACE_PROFILES = {
                     "are still kept) and Detail on Curves = Medium, for more faces on eyelids, lips and ear rims. The result is "
                     "shaded Smooth.",
         values={"use_sharp_angle": False, "sharp_angle_degrees": 35.0, "smart_features": True,
-                "keep_right_angles": True, "curvature_detail": "MEDIUM", "use_surface_analysis": False, "shading": "SMOOTH"},
+                "keep_right_angles": True, "curvature_detail": "MEDIUM", "use_surface_analysis": False, "shading": "SMOOTH",
+                "quality_attempts": 1},
     ),
 }
 
