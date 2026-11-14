@@ -41,3 +41,8 @@ You do not need to find a problem to be useful: "tested on Windows 11, Blender 4
 ## Releasing
 
 Releases are automatic. Update `version` in `quadforge/blender_manifest.toml` and add a matching `## <version>` section to `quadforge/CHANGELOG.md`, push, then push a tag `v<version>` (or run the *Release* workflow by hand with that tag). The workflow builds the engine on Linux, Windows, macOS arm64 and macOS x64, runs the 29 engine hard cases on each, packages the five zips, checks that the tag matches the manifest and publishes the GitHub release with the changelog section as its notes.
+
+
+## CAD battery (for developers)
+
+`python3 tools/cad_battery.py FOLDER_OR_FILES --target 20000 [--sym x] [--attempts 3] [--csv table.csv]` remeshes every STL / `.fmesh` with the Hard Surface settings and prints one verdict per part. A part passes when the result is closed (if the source was), has at least 98 % quads, at most 3 % triangles or squeezed quads, no vertex further than 0.5 % of the diagonal from the source, and a face count within 6 % of the request. The last line is the share of parts that passed. It needs Blender's Python module (`pip install bpy`). The thresholds are in `CRITERIA` at the top of the script.

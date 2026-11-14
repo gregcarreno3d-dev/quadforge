@@ -2,6 +2,7 @@
 
 ## 0.16.5
 - **Quality Attempts (Advanced, 1 to 5, default 1):** remeshes the part several times, each with a requested face count a little different (up to 3 % either way), and keeps the layout with the fewest triangles and squeezed quads (corner sine below 0.3) that stays within 6 % of the request. The quad layout reacts to small changes in an uneven way, so the best of a few is tidier. Measured on five CAD test parts at 10K quads, bad faces dropped on parts without symmetry (Ver-01 1.7 % to 1.2 %, PlateV01 3.5 % to 3.2 %) and did not drop on the others; with symmetry the attempts are scored on one half before the mirror, so the gain is not reliable there. Each attempt costs one remesh of time, so it is off by default.
+- **`tools/cad_battery.py`:** runs the Hard Surface remesh on a folder of STL / .fmesh parts and gives every part a PASS / FAIL (closed result, 98 % quads, at most 3 % triangles or squeezed quads, no vertex further than 0.5 % of the diagonal from the source, count within 6 %) plus the share of parts that passed. First measurement at 20K quads on ten CAD test parts: 7 of 10 pass.
 - Documented the measured defects of the Hard Surface remesh and the post-processing and guide experiments that did not help (STATUS_AND_LIMITS).
 
 ## 0.16.4

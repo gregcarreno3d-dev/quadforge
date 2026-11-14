@@ -57,7 +57,7 @@ quadforge/                    the add-on (this folder is what Blender installs)
   docs/                       user guide, decisions, status and limits, benchmark protocol
 engine-rs/src/                FORGE engine source (Rust; see engine-rs/README.md for the work-area map)
 engine/src/                   original C++17 engine (used until 0.14; reference, not shipped)
-tools/                        build.py (Zig cross-compiler), package.py, make_delivery.py, quality_metrics.py,
+tools/                        build.py (Zig cross-compiler), package.py, make_delivery.py, quality_metrics.py, cad_battery.py,
                               meshgen.py (synthetic meshes), fmesh.py, stlio.py, harness.py
 tests/                        early engine tests t01..t05
 docs/                         this documentation (technical report, this file, images/)
