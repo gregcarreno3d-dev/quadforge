@@ -23,6 +23,7 @@ where
 }
 
 pub fn default_threads() -> usize {
+    if let Some(n) = std::env::var("FORGE_THREADS").ok().and_then(|v| v.parse::<usize>().ok()) { return n.clamp(1, 64); }
     thread::available_parallelism().map(|n| n.get().min(16)).unwrap_or(2)
 }
 

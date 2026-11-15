@@ -1,6 +1,6 @@
-# Status and limits — QuadForge 0.16.6
+# Status and limits — QuadForge 0.16.7
 
-## Current status (0.16.6)
+## Current status (0.16.7)
 - **Surface analysis and chamfer/bevel detection (preview).** Tested on real CAD parts (a cylinder plate, a perforated plate, a flange, a spool-like part) and on synthetic parts (prisms, frustums, a tilted frustum, a UV sphere, a bracket with a tilted hole, a six-hole flange, a dome, a cone on a cylinder, an off-centre boss). Unit tests live in `engine-rs/src/stages/surfaces.rs`; the Blender test is `tests/blender_surfaces_test.py`.
 - **Known limits of the analysis:** surfaces of revolution are searched only about the X, Y and Z axes through the centre of the model; fillets made of very thin facets and coarse 3-facet fillets are only partly detected; with *Use Surface Analysis* about 2 % of the faces can stay triangles (isolated ones in the quad flow); the detector is in the Linux engine checked into the repository, and in Windows / macOS builds made by CI.
 - **Speed on CAD parts:** a plate with a strong size variation falls back after the second attempt (about 12 s instead of 26 s at 4K quads).
@@ -127,7 +127,7 @@ Measured on the Ver-03 test part (a disc with four holes, a revolution wall and 
 ## Suggested roadmap
 0.5.x: fixes after the author's tests. 0.6: lattice extraction. 0.7: integer-grid parametrization. 0.8: alignment to hard edges. Next: borders, a faster solver, thin-part handling. Then the Rust port (parallel version) and publishing.
 
-## CAD battery results (0.16.6)
+## CAD battery results (0.16.7)
 
 `tools/cad_battery.py` on the 20 synthetic parts of `tools/cad_corpus.py` (Hard Surface, no symmetry): **18 of 20 pass at 20K quads, 15 of 20 at 10K**. The remaining failures are squeezed quads and a few triangles on rings (flange, bracket at 20K; flange, gear, enclosure, countersunk at 10K) and the heat sink's fins at 10K. Pass rates on these synthetic parts are a floor for the work still to do, not a promise for real parts: the target is 9 of 10 on real STL files.
 

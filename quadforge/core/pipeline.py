@@ -929,7 +929,7 @@ def _remove_degenerate_geometry(bm) -> int:
     flat = [face for face, area in zip(bm.faces, areas) if area <= FLAT_FACE_AREA * typical]
     removed = 0
     if flat:
-        twins = list({vert for face in flat for vert in face.verts})
+        twins = list(dict.fromkeys(vert for face in flat for vert in face.verts))
         low = [min(vert.co[k] for vert in bm.verts) for k in range(3)]
         high = [max(vert.co[k] for vert in bm.verts) for k in range(3)]
         diagonal = sum((high[k] - low[k]) ** 2 for k in range(3)) ** 0.5
@@ -941,7 +941,7 @@ def _remove_degenerate_geometry(bm) -> int:
             bmesh.ops.delete(bm, geom=broken, context="FACES_ONLY")
             typical_edge = sorted(edge.calc_length() for edge in bm.edges)[len(bm.edges) // 2]
             for fraction in SLIT_SEW_FRACTIONS:   # the folded strip left a slit whose two sides lie on top of each other
-                slit = list({vert for edge in bm.edges if edge.is_boundary for vert in edge.verts})
+                slit = list(dict.fromkeys(vert for edge in bm.edges if edge.is_boundary for vert in edge.verts))
                 if not slit:
                     break
                 bmesh.ops.remove_doubles(bm, verts=slit, dist=fraction * typical_edge)
@@ -949,7 +949,7 @@ def _remove_degenerate_geometry(bm) -> int:
     low = [min(vert.co[k] for vert in bm.verts) for k in range(3)]
     high = [max(vert.co[k] for vert in bm.verts) for k in range(3)]
     reach = 1e-6 * sum((high[k] - low[k]) ** 2 for k in range(3)) ** 0.5
-    zero = list({vert for edge in bm.edges if edge.calc_length() <= reach for vert in edge.verts})
+    zero = list(dict.fromkeys(vert for edge in bm.edges if edge.calc_length() <= reach for vert in edge.verts))
     if zero:                     # a quad with two corners on the same spot is a triangle in disguise
         bmesh.ops.remove_doubles(bm, verts=zero, dist=reach)
     wires = [edge for edge in bm.edges if not edge.link_faces]
@@ -1065,12 +1065,12 @@ def _mirror_halves_into_final_mesh(half_mesh, plan: sym.SymmetryPlan, input_was_
                 if len(edge.link_faces) > 2 and all(_on_plane(vert) for vert in edge.verts):
                     extra.extend(sorted(edge.link_faces, key=lambda face: face.calc_area())[:len(edge.link_faces) - 2])
             if extra:
-                bmesh.ops.delete(bm, geom=list({face for face in extra if face.is_valid}), context="FACES")
+                bmesh.ops.delete(bm, geom=list(dict.fromkeys(face for face in extra if face.is_valid)), context="FACES")
             gaps = _seam_gaps()
             if gaps:  # tiny holes left where pinched quads were dropped at the seam
                 # a slit of near-duplicate vertices first (they sit a hair apart on the plane), then fill what is left
                 reach = 0.25 * sum(edge.calc_length() for edge in gaps) / len(gaps)
-                edge_verts = list({vertex for edge in gaps for vertex in edge.verts})
+                edge_verts = list(dict.fromkeys(vertex for edge in gaps for vertex in edge.verts))
                 bmesh.ops.remove_doubles(bm, verts=edge_verts, dist=reach)
                 bmesh.ops.delete(bm, geom=[face for face in bm.faces if face.calc_area() <= 1e-12], context="FACES")
                 gaps = _seam_gaps()
