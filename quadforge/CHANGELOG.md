@@ -4,6 +4,7 @@
 - **`tools/cad_corpus.py`:** builds 20 synthetic CAD parts (plates, flange, shaft, gear, pulley, housing, heat sink...) for the battery. At 20K quads 16 of 20 pass (80 %).
 - **Count correction (Hard Surface):** if the first result is more than 5 % from the requested face count, the remesh runs once more with the request corrected halfway by the ratio, and the closer result is kept (plate_grid 18159 to 20337 faces). Costs one extra remesh only on those parts.
 - Fixed: zero-area folded strips left by the engine on thin bevels no longer leave non-manifold edges: after they are removed the slit is sewn shut (growing merge reach) and 3 to 4 sided holes are filled. Corpus at 10K quads: 10 to 13 of 20 pass (bracket was non-manifold).
+- Fixed: the folded-strip cleanup now treats faces under 0.01 % of the average face area as degenerate (it was 0.00001 %), which removes the near-zero quads the engine leaves on thin bevels and fins. Corpus: 18 of 20 pass at 20K quads (was 16), 15 of 20 at 10K (was 13); heat sink and shaft now pass; a channel at 80K no longer comes out non-manifold.
 - Fixed: STL faces that collapse when welded made the cleanup hang (`validate()` before removing doubles); the thin-strip collapse can no longer tear open a bevel corner (it is undone if it adds open edges).
 
 ## 0.16.5

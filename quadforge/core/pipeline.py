@@ -914,6 +914,7 @@ def _tidy_seam(bm, plan: sym.SymmetryPlan, settings) -> None:
         _run(bm)
 
 
+FLAT_FACE_AREA = 1e-4   # a face under this share of the average face area is a folded strip, not a real quad
 SLIT_SEW_FRACTIONS = (0.003, 0.03, 0.1, 0.3, 0.6)   # growing merge reach, in median edges, to sew the slit left by a removed folded strip
 
 
@@ -925,7 +926,7 @@ def _remove_degenerate_geometry(bm) -> int:
         return 0
     areas = [face.calc_area() for face in bm.faces]
     typical = float(sum(areas)) / len(areas)
-    flat = [face for face, area in zip(bm.faces, areas) if area <= 1e-7 * typical]
+    flat = [face for face, area in zip(bm.faces, areas) if area <= FLAT_FACE_AREA * typical]
     removed = 0
     if flat:
         twins = list({vert for face in flat for vert in face.verts})
@@ -934,7 +935,7 @@ def _remove_degenerate_geometry(bm) -> int:
         diagonal = sum((high[k] - low[k]) ** 2 for k in range(3)) ** 0.5
         bmesh.ops.remove_doubles(bm, verts=twins, dist=1e-6 * diagonal)
         broken = [face for face in bm.faces if face.is_valid and (
-            len({vert.index for vert in face.verts}) < len(face.verts) or face.calc_area() <= 1e-7 * typical)]
+            len({vert.index for vert in face.verts}) < len(face.verts) or face.calc_area() <= FLAT_FACE_AREA * typical)]
         removed = len(broken)
         if broken:
             bmesh.ops.delete(bm, geom=broken, context="FACES_ONLY")
