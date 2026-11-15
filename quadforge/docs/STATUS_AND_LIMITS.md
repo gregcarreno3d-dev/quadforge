@@ -130,3 +130,5 @@ Measured on the Ver-03 test part (a disc with four holes, a revolution wall and 
 ## CAD battery results (0.16.6)
 
 `tools/cad_battery.py` on the 20 synthetic parts of `tools/cad_corpus.py` (Hard Surface, no symmetry): **16 of 20 pass at 20K quads, 13 of 20 at 10K**. The remaining failures are squeezed quads and a few triangles on rings (flange, shaft, bolt, gear, enclosure, countersunk) and on fins about as thin as one cell (heatsink). Pass rates on these synthetic parts are a floor for the work still to do, not a promise for real parts: the target is 9 of 10 on real STL files.
+
+Experiments that did not help (0.16.6 work): collapsing every edge shorter than 10 % of the median (flange 8.1 % to 6.7 % flaws, but the corpus fell from 15 to 13 passes because the collapsed quads became triangles); letting vertices on feature lines slide along their line in the engine's quad-quality pass (flange 1766 to 1739 flaws before finishing, 1403 to 1486 after). The squeezed quads on rings come from the vertex-count mismatch between the radial grid and the band rows, so they need a change in how the grid is laid out near rings, not a local fix afterwards.
