@@ -5,6 +5,7 @@
 - **`tools/cad_battery.py`:** runs the Hard Surface remesh on a folder of STL / .fmesh parts and gives every part a PASS / FAIL (closed result, 98 % quads, at most 3 % triangles or squeezed quads, no vertex further than 0.5 % of the diagonal from the source, count within 6 %) plus the share of parts that passed. First measurement at 20K quads on ten CAD test parts: 7 of 10 pass.
 - **`tools/cad_corpus.py`:** builds 20 synthetic CAD parts (plates, flange, shaft, gear, pulley, housing, heat sink...) for the battery. At 20K quads 16 of 20 pass (80 %).
 - **Count correction (Hard Surface):** if the first result is more than 5 % from the requested face count, the remesh runs once more with the request corrected halfway by the ratio, and the closer result is kept (plate_grid 18159 to 20337 faces). Costs one extra remesh only on those parts.
+- Fixed: zero-area folded strips left by the engine on thin bevels no longer leave non-manifold edges: after they are removed the slit is sewn shut (growing merge reach) and 3 to 4 sided holes are filled. Corpus at 10K quads: 10 to 13 of 20 pass (bracket was non-manifold).
 - Fixed: STL faces that collapse when welded made the cleanup hang (`validate()` before removing doubles); the thin-strip collapse can no longer tear open a bevel corner (it is undone if it adds open edges).
 - Documented the measured defects of the Hard Surface remesh and the post-processing and guide experiments that did not help (STATUS_AND_LIMITS).
 

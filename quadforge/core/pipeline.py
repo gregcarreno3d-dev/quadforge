@@ -914,6 +914,9 @@ def _tidy_seam(bm, plan: sym.SymmetryPlan, settings) -> None:
         _run(bm)
 
 
+SLIT_SEW_FRACTIONS = (0.003, 0.03, 0.1, 0.3, 0.6)   # growing merge reach, in median edges, to sew the slit left by a removed folded strip
+
+
 def _remove_degenerate_geometry(bm) -> int:
     """Zero-area faces (a quad folded onto a line, two of its corners being separate vertices at the same spot), stray
     wire edges and loose vertices. Merging the twin vertices lets the faces on both sides of the fold share their edge,
@@ -935,6 +938,13 @@ def _remove_degenerate_geometry(bm) -> int:
         removed = len(broken)
         if broken:
             bmesh.ops.delete(bm, geom=broken, context="FACES_ONLY")
+            typical_edge = sorted(edge.calc_length() for edge in bm.edges)[len(bm.edges) // 2]
+            for fraction in SLIT_SEW_FRACTIONS:   # the folded strip left a slit whose two sides lie on top of each other
+                slit = list({vert for edge in bm.edges if edge.is_boundary for vert in edge.verts})
+                if not slit:
+                    break
+                bmesh.ops.remove_doubles(bm, verts=slit, dist=fraction * typical_edge)
+            _fill_small_loops(bm, [edge for edge in bm.edges if edge.is_boundary], max_sides=4)
     low = [min(vert.co[k] for vert in bm.verts) for k in range(3)]
     high = [max(vert.co[k] for vert in bm.verts) for k in range(3)]
     reach = 1e-6 * sum((high[k] - low[k]) ** 2 for k in range(3)) ** 0.5
