@@ -677,6 +677,7 @@ def _collapse_slivers(mesh) -> float:
 
 ATTEMPT_SCALES = (1.0, 0.985, 1.015, 0.97, 1.03)   # the requested count of each attempt; the quad layout changes a little with it
 BAD_QUAD_SINE = 0.3                                # a quad with a corner whose sine is below this counts as a flaw
+COUNT_RETRY_DEVIATION = 0.05                       # one corrected rerun when the first count is further than this from the request
 COUNT_TOLERANCE = 0.06                             # the engine itself lands within 4 to 6 percent: only beyond that is a count penalised
 
 
@@ -719,8 +720,28 @@ def _remesh_with_engine(context, mesh, plan: sym.SymmetryPlan, settings: RemeshS
     """
     attempts = max(1, min(len(ATTEMPT_SCALES), int(settings.quality_attempts)))
     if attempts <= 1 or settings.output != "QUADS" or hard_edge_count <= 0:
-        return (yield from _remesh_once(context, mesh, plan, settings, target_quads, hard_edge_count, temp,
-                                        engine_progress, warnings, guides, fallback_density))
+        if settings.output != "QUADS" or hard_edge_count <= 0:
+            return (yield from _remesh_once(context, mesh, plan, settings, target_quads, hard_edge_count, temp,
+                                            engine_progress, warnings, guides, fallback_density))
+        # one attempt: if the count lands far from the request, run once more with the request corrected by the ratio
+        spare = temp.track_mesh(mesh.copy())
+        first_warnings = []
+        first = yield from _remesh_once(context, mesh, plan, settings, target_quads, hard_edge_count, temp,
+                                        engine_progress, first_warnings, guides, fallback_density)
+        faces = len(first.polygons) * plan.engine_pieces
+        if abs(faces - target_quads) / max(1, target_quads) <= COUNT_RETRY_DEVIATION:
+            if warnings is not None:
+                warnings.extend(first_warnings)
+            return first
+        retry_warnings = []
+        second = yield from _remesh_once(context, spare, plan, settings,
+                                         max(MIN_FACES_PER_PIECE, round(target_quads * (0.5 + 0.5 * target_quads / max(1, faces)))),
+                                         hard_edge_count, temp, engine_progress, retry_warnings, guides, fallback_density)
+        retry_faces = len(second.polygons) * plan.engine_pieces
+        better = abs(retry_faces - target_quads) < abs(faces - target_quads)
+        if warnings is not None:
+            warnings.extend(retry_warnings if better else first_warnings)
+        return second if better else first
     best, best_score, best_warnings = None, None, []
     for attempt in range(attempts):
         trial_warnings = []
