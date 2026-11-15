@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+- **Count correction on the finished mesh:** the cleanup after the engine removes faces, so the engine's count is not the final one (Plate at 30K came out 6 % short). If the finished count is more than 5 % from the request, the remesh now runs once more with the request corrected halfway by the ratio and the closer result is kept. This replaces the earlier correction, which looked at the engine's own count. Corpus at 20K quads: 19 of 20 pass; real parts (Plate, Cylinder Ver-01, Ver-02 at 30K): 3 of 3.
+
 ## 0.16.7
 - **Repeatable results:** the same part now always gives the same mesh. The finishing steps built vertex lists from unordered sets, so welding order changed from run to run (the same flange gave 9640 or 9449 faces, one run with flipped faces). They now keep a fixed order.
 - Engine: `FORGE_THREADS` environment variable sets the thread count (for testing); default unchanged.
