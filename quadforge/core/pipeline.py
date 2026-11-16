@@ -1170,6 +1170,27 @@ def _badness(mesh, target: int) -> float:
     return max(0.0, count_error - COUNT_TOLERANCE) * 10.0 + _layout_flaws(mesh) / faces
 
 
+THIN_WARNING_FLAW_SHARE = 0.03                      # warn when more than this share of the finished faces are flaws
+THIN_WARNING_MORE_QUADS = (1.4, 2.0)                # measured on the corpus: 1.4x fixes most parts, the thinnest need 2x
+
+
+def _warn_thin_strips(result, target: int, settings: RemeshSettings) -> None:
+    """Tell the person when thin chamfers, rims or fins are narrower than a quad and the layout is untidy there. More
+    quads is the one remedy that always worked in the corpus (the extra rerun cannot make a strip wider than a cell)."""
+    if settings.output != "QUADS" or not settings.soft_bevels:
+        return
+    mesh = result.levels[0].object.data
+    faces = len(mesh.polygons)
+    share = _layout_flaws(mesh) / max(1, faces)
+    if share <= THIN_WARNING_FLAW_SHARE:
+        return
+    factor = THIN_WARNING_MORE_QUADS[0 if share < 0.08 else 1]
+    suggested = int(round(target * factor / 1000.0)) * 1000 or int(target * factor)
+    result.warnings.append(
+        f"{share * 100:.0f}% of the faces are triangles or squeezed quads: thin chamfers, rims or fins here are about as "
+        f"narrow as one quad. Try about {suggested} quads for a cleaner result.")
+
+
 def run_steps(context, original, settings: RemeshSettings,
               progress: ProgressCallback = _ignore_progress):
     """Generator version of ``run`` (see ``_run_steps_once``) with up to two corrected reruns, each kept only when it is
@@ -1198,6 +1219,7 @@ def run_steps(context, original, settings: RemeshSettings,
             fine_tried = True
             retry = dataclasses.replace(settings, thin_band_floor=THIN_BAND_FINE_FLOOR)
         else:
+            _warn_thin_strips(best, target, settings)
             return best
         second_result = yield from _run_steps_once(context, original, retry, progress)
         second = second_result.levels[0]

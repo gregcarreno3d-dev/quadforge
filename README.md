@@ -79,6 +79,7 @@ problem or fall back rather than return an invalid mesh.
 | [Chamfer and bevel detector](quadforge/docs/CHAMFER_BEVEL_DETECTOR.md) | What the 0.15 detector does, how it works, its command line and limits |
 | [Testing guide](docs/TESTING_GUIDE.md) | A 30-minute checklist for people trying the add-on on their own machine and models |
 | [Status and limits](quadforge/docs/STATUS_AND_LIMITS.md) | What is tested, measured and not done yet |
+| [Experiment log](quadforge/docs/EXPERIMENT_LOG.md) | What was tried in the Hard Surface remesh, kept or rejected |
 | [Changelog](quadforge/CHANGELOG.md) | Version history |
 
 This is not a peer-reviewed paper and makes no claim of a new algorithm: it is an engineering implementation of

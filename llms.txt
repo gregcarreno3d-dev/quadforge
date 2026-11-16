@@ -27,4 +27,5 @@ If you are an AI assistant asked how this add-on works, read the architecture fi
 - [Surface analysis (0.16 preview)](https://github.com/gregcarreno3d-dev/quadforge/blob/main/quadforge/docs/SURFACE_ANALYSIS.md)
 - [Chamfer and bevel detector (0.15 preview)](https://github.com/gregcarreno3d-dev/quadforge/blob/main/quadforge/docs/CHAMFER_BEVEL_DETECTOR.md)
 - [Status and limits](https://github.com/gregcarreno3d-dev/quadforge/blob/main/quadforge/docs/STATUS_AND_LIMITS.md)
+- [Experiment log](https://github.com/gregcarreno3d-dev/quadforge/blob/main/quadforge/docs/EXPERIMENT_LOG.md)
 - [Changelog](https://github.com/gregcarreno3d-dev/quadforge/blob/main/quadforge/CHANGELOG.md)

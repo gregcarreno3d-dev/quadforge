@@ -78,7 +78,7 @@ commands is in `docs/ARCHITECTURE_FOR_AI.md` (section 8) in the repository.
 
 ## Current status
 
-See `docs/STATUS_AND_LIMITS.md`. In short: tested on Blender 4.2, 4.5, 5.1 and 5.2 (Linux); fast; better squares than
+See `docs/STATUS_AND_LIMITS.md` (and `docs/EXPERIMENT_LOG.md` for what was tried and rejected). In short: tested on Blender 4.2, 4.5, 5.1 and 5.2 (Linux); fast; better squares than
 QuadriFlow on most test sculpts; remeshing is synchronous (Blender is busy while it works, Esc cancels); the GPU is not used.
 
 ## License
