@@ -36,3 +36,12 @@ that breaks another part, stays out of the code and is listed here.
   poles in the engine's field / extraction (what QuadWild and QuadriFlow do); not started.
 * Plate: slot-through-cylinder patch, corner notch; Ver-01 transition patch; Ver-03 zigzag at hole rims; "3 flipped edges" warning not reproduced locally.
 * Triangle counts differ between machines and thread counts (`FORGE_THREADS` reproduces a given count).
+
+## Ideas not started (Soft Surface / Organic)
+
+Soft version of the Hard Surface detection: continuous measures that weight the size and direction fields instead of hard edges.
+
+* **Local feature size** (thin parts such as fingers, ear rims, eyelids) feeding the size field, the organic counterpart of `_refine_thin_bands`.
+* **Curvature anisotropy map** (|k1 - k2|): strong direction alignment on ridges (lip edge, eyelids, nostrils, ear helix), weak alignment and pole placement preferred where the surface is isotropic (cheeks, forehead).
+* **Automatic flow guides** from closed high-curvature loops (eye and mouth rings), as the bevel rings are found today.
+* **Measure first:** head at 5K / 10K / 20K, uniform vs curvature-weighted, deviation from the source and poles near eyes and mouth. Weights only, never constraints: a finer or stronger constraint made the integer grid fail on Hard Surface parts (floor 0.35 was not monotonic).
