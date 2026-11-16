@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.16.8
+- Fixed: the corrected rerun could keep a layout with a vertex of two edges on the centre seam (head test with flow guides); a rerun with such a corner is now never kept.
+- **Corpus (20 synthetic CAD parts, Hard Surface):** 20 of 20 pass at 20K quads (was 18), 19 of 20 at 30K (flange 7.6 %; it passes at 42K, which is what the new warning suggests), 15 of 20 at 10K. Real parts (Plate, Cylinder Ver-01, Ver-02 at 30K): 3 of 3.
 - **Thin-strip warning:** when more than 3 % of the finished faces are triangles or squeezed quads, the result carries a warning with a suggested quad count (1.4x the request, 2x above 8 % flaws). Measured: 1.4x fixed flange, gear, enclosure and countersunk at 14K; the heat sink (fins 1.2 mm, bevel 0.35 mm) needs 20K.
 - **`quadforge/docs/EXPERIMENT_LOG.md`:** one list of what was tried in the Hard Surface remesh, what it measured and whether it was kept.
 - **Second chance with finer thin strips (Hard Surface):** the size field that follows the width of chamfer and bevel strips was held at 0.6 (0.75 as fallback) of the normal size because finer made the engine's grid fail on some parts. Finer (0.35) fixes the ring defects on others (flange at 20K: 8.1 % to 1.5 % flaws; bracket 4.7 % to 1.3 %) but breaks different parts (bolt, countersunk, ratchet), so as a default it is a net loss (17 of 20). It is now a second chance: if a finished result has more than 3 % triangles or squeezed quads, the remesh runs once more with the finer floor and the cleaner of the two is kept. Corpus at 20K: 20 of 20 pass (was 18); 10K: 15 of 20 (unchanged); real parts at 30K: 3 of 3 (unchanged). Parts that already pass cost nothing extra; the others take up to one extra remesh.

@@ -1167,7 +1167,11 @@ def _badness(mesh, target: int) -> float:
     """Ordering of finished results: first the count error beyond the tolerance, then the flaw share."""
     faces = max(1, len(mesh.polygons))
     count_error = abs(faces - target) / target
-    return max(0.0, count_error - COUNT_TOLERANCE) * 10.0 + _layout_flaws(mesh) / faces
+    edge_vertices = np.empty(len(mesh.edges) * 2, dtype=np.int64)
+    mesh.edges.foreach_get("vertices", edge_vertices)
+    valence = np.bincount(edge_vertices, minlength=len(mesh.vertices))
+    corners = int(np.count_nonzero(valence == 2))      # a vertex with two edges (a corner left on a seam) is always a defect
+    return max(0.0, count_error - COUNT_TOLERANCE) * 10.0 + _layout_flaws(mesh) / faces + (1.0 if corners else 0.0)
 
 
 THIN_WARNING_FLAW_SHARE = 0.03                      # warn when more than this share of the finished faces are flaws
@@ -1188,7 +1192,7 @@ def _warn_thin_strips(result, target: int, settings: RemeshSettings) -> None:
     suggested = int(round(target * factor / 1000.0)) * 1000 or int(target * factor)
     result.warnings.append(
         f"{share * 100:.0f}% of the faces are triangles or squeezed quads: thin chamfers, rims or fins here are about as "
-        f"narrow as one quad. Try about {suggested} quads for a cleaner result.")
+        f"narrow as one quad. Try about {suggested} quads (or a slightly different count) for a cleaner result.")
 
 
 def run_steps(context, original, settings: RemeshSettings,

@@ -1,13 +1,14 @@
-# Status and limits — QuadForge 0.16.7
+# Status and limits — QuadForge 0.16.8
 
 See `EXPERIMENT_LOG.md` for the short list of what was tried, kept and rejected.
 
-## Current status (0.16.7)
+## Current status (0.16.8)
 - **Surface analysis and chamfer/bevel detection (preview).** Tested on real CAD parts (a cylinder plate, a perforated plate, a flange, a spool-like part) and on synthetic parts (prisms, frustums, a tilted frustum, a UV sphere, a bracket with a tilted hole, a six-hole flange, a dome, a cone on a cylinder, an off-centre boss). Unit tests live in `engine-rs/src/stages/surfaces.rs`; the Blender test is `tests/blender_surfaces_test.py`.
 - **Known limits of the analysis:** surfaces of revolution are searched only about the X, Y and Z axes through the centre of the model; fillets made of very thin facets and coarse 3-facet fillets are only partly detected; with *Use Surface Analysis* about 2 % of the faces can stay triangles (isolated ones in the quad flow); the detector is in the Linux engine checked into the repository, and in Windows / macOS builds made by CI.
 - **Speed on CAD parts:** a plate with a strong size variation falls back after the second attempt (about 12 s instead of 26 s at 4K quads).
 
 ## Tested
+- 0.16.8 Blender suite (hard, integration, surfaces, bevel, forge, zone_detail, zones, guides, head, preview, subdiv, uv, vgzones, surface): all pass; the matrix gives 66 of 67 (gear-like with 30 hard edges: 97 % quads, same as 0.16.7).
 - FORGE engine (Linux): sphere, torus, box with 12 exact hard edges, hemisphere with border, cylinder, density (length ratio 2.99 vs 3 requested), meshes with defects, 120 random cases with no failures, 1.3 M tris → 40 K in ~7 s (peak ~390 MB).
 - Python backend with the real engine through a simulated mesh.
 - Windows and macOS binaries are built natively by CI and pass the engine tests there; real-machine use is still limited.
@@ -128,6 +129,10 @@ Measured on the Ver-03 test part (a disc with four holes, a revolution wall and 
 
 ## Suggested roadmap
 0.5.x: fixes after the author's tests. 0.6: lattice extraction. 0.7: integer-grid parametrization. 0.8: alignment to hard edges. Next: borders, a faster solver, thin-part handling. Then the Rust port (parallel version) and publishing.
+
+## CAD battery results (0.16.8)
+
+`tools/cad_battery.py` on the 20 synthetic parts of `tools/cad_corpus.py` (Hard Surface, no symmetry): **20 of 20 at 20K quads (100 %), 19 of 20 at 30K (95 %), 15 of 20 at 10K (75 %)**; real parts Plate, Cylinder Ver-01 and Ver-02 at 30K: 3 of 3. Face counts are within 6 % of the request in every passing case. The failure at 30K is the flange (7.6 % flaws, 168 s); it is not monotonic in the count (14K pass, 20K pass, 25K 4.7 %, 30K 7.6 %, 42K 0.8 %), so a nearby count is the remedy and is what the warning suggests. Below, the 0.16.7 section keeps the earlier numbers.
 
 ## CAD battery results (0.16.7)
 
