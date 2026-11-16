@@ -61,6 +61,7 @@ MAX_HARD_EDGE_FRACTION = 0.25             # warn if more than 25% of the edges a
 RELAX_PASSES = 4                         # passes of the bad-quad relaxation
 THIN_BAND_STRONG_FLOOR = 0.6            # first try: the cleanest rows along thin chamfer strips (the engine's grid may refuse it)
 THIN_BAND_FLOOR = 0.75                   # strongest refinement of a thin strip between hard edges (finer breaks the engine's grid)
+THIN_BAND_FINE_FLOOR = 0.35              # second chance: much finer rows along thin strips (helps some parts, hurts others)
 THIN_BAND_MIN_LENGTH = 12.0              # only long strips (rims, chamfer rings, fillets) are refined
 THIN_BAND_REACH = 3.0                     # bands between hard edges narrower than this many quad lengths get finer faces
 TARGET_MISS_WARNING_FRACTION = 0.15       # warn if the quad count is 15% away from the target
@@ -101,6 +102,7 @@ class RemeshSettings:
     use_surface_analysis: bool = False       # experimental: surface borders and chamfer/bevel sides become hard edges (CAD meshes)
     relax_quads: bool = True         # even out badly shaped quads and put them back on the surface
     soft_bevel_detail: float = 0.5           # edge length multiplier on the facets of rounded bevels (1 = no refinement)
+    thin_band_floor: float = 0.0             # internal: finest size multiplier of thin strips (0 = the default floors); set by the rerun
     use_seams: bool = True
     smart_features: bool = True      # judge whole chains of sharp edges, not single edges
     min_feature_size: float = 2.0    # chains shorter than this many quad lengths are noise
@@ -508,7 +510,7 @@ class LevelConstraints:
 
 
 def _refine_thin_bands(mesh, arrays, hard: np.ndarray, areas: np.ndarray, quad_length: float, band: np.ndarray,
-                       bevel_scale: float):
+                       bevel_scale: float, floor: float = 0.0):
     """Faces between hard edges that are narrower than a quad (a chamfer strip, the facets of a rounded bevel) cannot hold
     a row of quads at the normal size: the rows zigzag across them. Give those faces a smaller target size, in
     proportion to the band width; the engine blends it into the surroundings. The strongest refinement is tried first;
@@ -542,10 +544,10 @@ def _refine_thin_bands(mesh, arrays, hard: np.ndarray, areas: np.ndarray, quad_l
             multiplier = np.minimum(multiplier, np.asarray(current, dtype=np.float64))
         return multiplier
 
-    strong = multiplier_for(THIN_BAND_STRONG_FLOOR)
+    strong = multiplier_for(floor if floor > 0.0 else THIN_BAND_STRONG_FLOOR)
     if not (strong < 1.0).any():
         return 0, None
-    gentle = multiplier_for(THIN_BAND_FLOOR)
+    gentle = multiplier_for(max(floor, 0.5) if floor > 0.0 else THIN_BAND_FLOOR)
     attribute = mesh.attributes.get(DENSITY_ATTRIBUTE)
     if attribute is not None:
         mesh.attributes.remove(attribute)
@@ -629,7 +631,7 @@ def _mark_hard_edges_and_zones(mesh, settings: RemeshSettings, quads_for_piece: 
     fallback_density = None
     if settings.soft_bevels and settings.soft_bevel_detail < 1.0 and geometric.any() and soft_band is not None:
         _refined, fallback_density = _refine_thin_bands(mesh, arrays, hard & ~planes, areas, quad_length, soft_band,
-                                                        settings.soft_bevel_detail)
+                                                        settings.soft_bevel_detail, settings.thin_band_floor)
     mio.write_edge_flag(mesh, "use_edge_sharp", hard)
     segments = features.feature_segments(arrays, geometric) if geometric.any() else None
     return LevelConstraints(hard_count_shown, quad_length, segments, guide_lines > 0, fallback_density)
@@ -677,6 +679,7 @@ def _collapse_slivers(mesh) -> float:
 
 ATTEMPT_SCALES = (1.0, 0.985, 1.015, 0.97, 1.03)   # the requested count of each attempt; the quad layout changes a little with it
 BAD_QUAD_SINE = 0.3                                # a quad with a corner whose sine is below this counts as a flaw
+SECOND_CHANCE_FLAW_SHARE = 0.03                     # a Hard Surface result with more flaws than this gets one rerun with finer strips
 FINAL_COUNT_RETRY = 0.05                            # one corrected rerun when the finished count is further than this from the request
 COUNT_TOLERANCE = 0.06                             # the engine itself lands within 4 to 6 percent: only beyond that is a count penalised
 
@@ -1154,34 +1157,59 @@ def run(context, original, settings: RemeshSettings,
         return done.value
 
 
+def _discard(result_level):
+    mesh = result_level.object.data
+    bpy.data.objects.remove(result_level.object, do_unlink=True)
+    bpy.data.meshes.remove(mesh)
+
+
+def _badness(mesh, target: int) -> float:
+    """Ordering of finished results: first the count error beyond the tolerance, then the flaw share."""
+    faces = max(1, len(mesh.polygons))
+    count_error = abs(faces - target) / target
+    return max(0.0, count_error - COUNT_TOLERANCE) * 10.0 + _layout_flaws(mesh) / faces
+
+
 def run_steps(context, original, settings: RemeshSettings,
               progress: ProgressCallback = _ignore_progress):
-    """Generator version of ``run`` (see ``_run_steps_once``) with one corrected rerun when the finished face count
-    lands more than ``FINAL_COUNT_RETRY`` away from the request: the cleanup after the engine removes faces, so the
-    engine's own count is not the final one. The closer of the two results is kept."""
+    """Generator version of ``run`` (see ``_run_steps_once``) with up to two corrected reruns, each kept only when it is
+    better than what is already there:
+
+    * the finished face count is more than ``FINAL_COUNT_RETRY`` from the request (the cleanup after the engine removes
+      faces, so the engine's own count is not the final one): rerun with a corrected request;
+    * Hard Surface only: more than ``SECOND_CHANCE_FLAW_SHARE`` of the faces are triangles or squeezed quads: rerun with
+      much finer rows along thin strips (``THIN_BAND_FINE_FLOOR``). That helps some parts and hurts others, so it is a
+      second chance, never the default."""
     result = yield from _run_steps_once(context, original, settings, progress)
     if len(result.levels) != 1 or settings.output != "QUADS" or settings.target_quads < 1000:
         return result
-    first = result.levels[0]
-    final = len(first.object.data.polygons)
-    if abs(final - settings.target_quads) / settings.target_quads <= FINAL_COUNT_RETRY:
-        return result
-    scaled = dataclasses.replace(settings, target_quads=max(
-        1000, round(settings.target_quads * (0.5 + 0.5 * settings.target_quads / max(1, final)))))
-    second_result = yield from _run_steps_once(context, original, scaled, progress)
-    second = second_result.levels[0]
-    if abs(len(second.object.data.polygons) - settings.target_quads) < abs(final - settings.target_quads):
-        name, mesh = first.object.name, first.object.data
-        bpy.data.objects.remove(first.object, do_unlink=True)
-        bpy.data.meshes.remove(mesh)
-        second.object.name = name
-        second.object.data.name = name
-        second.target_quads = settings.target_quads
-        return second_result
-    mesh = second.object.data
-    bpy.data.objects.remove(second.object, do_unlink=True)
-    bpy.data.meshes.remove(mesh)
-    return result
+    target = settings.target_quads
+    best, floor = result, 0.0
+    count_tried = fine_tried = False
+    while True:
+        first = best.levels[0]
+        faces = len(first.object.data.polygons)
+        if not count_tried and abs(faces - target) / target > FINAL_COUNT_RETRY:
+            count_tried = True
+            requested = max(1000, round(target * (0.5 + 0.5 * target / max(1, faces))))
+            retry = dataclasses.replace(settings, target_quads=requested, thin_band_floor=floor)
+        elif (not fine_tried and settings.soft_bevels and settings.soft_bevel_detail < 1.0
+              and _layout_flaws(first.object.data) / max(1, faces) > SECOND_CHANCE_FLAW_SHARE):
+            fine_tried = True
+            retry = dataclasses.replace(settings, thin_band_floor=THIN_BAND_FINE_FLOOR)
+        else:
+            return best
+        second_result = yield from _run_steps_once(context, original, retry, progress)
+        second = second_result.levels[0]
+        if _badness(second.object.data, target) < _badness(first.object.data, target):
+            name = first.object.name
+            _discard(first)
+            second.object.name = name
+            second.object.data.name = name
+            second.target_quads = target
+            best, floor = second_result, retry.thin_band_floor
+        else:
+            _discard(second)
 
 
 def _run_steps_once(context, original, settings: RemeshSettings,

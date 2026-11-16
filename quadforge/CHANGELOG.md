@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- **Second chance with finer thin strips (Hard Surface):** the size field that follows the width of chamfer and bevel strips was held at 0.6 (0.75 as fallback) of the normal size because finer made the engine's grid fail on some parts. Finer (0.35) fixes the ring defects on others (flange at 20K: 8.1 % to 1.5 % flaws; bracket 4.7 % to 1.3 %) but breaks different parts (bolt, countersunk, ratchet), so as a default it is a net loss (17 of 20). It is now a second chance: if a finished result has more than 3 % triangles or squeezed quads, the remesh runs once more with the finer floor and the cleaner of the two is kept. Corpus at 20K: 20 of 20 pass (was 18); 10K: 15 of 20 (unchanged); real parts at 30K: 3 of 3 (unchanged). Parts that already pass cost nothing extra; the others take up to one extra remesh.
 - **Count correction on the finished mesh:** the cleanup after the engine removes faces, so the engine's count is not the final one (Plate at 30K came out 6 % short). If the finished count is more than 5 % from the request, the remesh now runs once more with the request corrected halfway by the ratio and the closer result is kept. This replaces the earlier correction, which looked at the engine's own count. Corpus at 20K quads: 19 of 20 pass; real parts (Plate, Cylinder Ver-01, Ver-02 at 30K): 3 of 3.
 
 ## 0.16.7
