@@ -83,7 +83,7 @@ Reading: FORGE triangles are close to equilateral and follow the surface about t
 Open borders: the engine closes every border loop with a cap, treats the loop as a hard-edge line, runs the integer-grid method and removes the quads on the cap. Loops shorter than about 6 quad edges are left closed (the hole disappears). The border may get a few triangles where very short edges were welded.
 
 ## Not tested
-- Windows and macOS on real machines. Blender 4.2.0, 4.5.15 LTS, 5.1.2 and 5.2 were tested on Linux through the `bpy` module (integration, zones, guides, UV, surface, hard-edge suites and the 67-case matrix all pass); the Blender GUI itself was only used on 5.2.
+- Windows and macOS on real machines. Blender 4.2.0, 4.5.15 LTS, 5.1.2 and 5.2 were tested on Linux through the `bpy` module (integration, zones, guides, UV, surface, hard-edge suites and the 67-case matrix all pass); the Blender GUI itself was only used on 5.2 and 5.3 (0.16.9 sculpt tests).
 - Test note: the `bpy` module can crash or hang at interpreter shutdown on 4.2 and 4.5 (a Blender issue, not the add-on's), so tests run through `quadforge/tests/run_in_bpy.py`, which exits with `os._exit`.
 
 ## Limitations
@@ -112,6 +112,22 @@ Measured on the Ver-03 test part (a disc with four holes, a revolution wall and 
 - About 24 of the 100 triangles lie on the mirror line (skinny pairs, corners of about 20 and 175 degrees that are not joined into a quad on purpose); the rest are isolated singularities.
 - Tried and **not** enough (changes were reverted): joining triangle pairs again after the mirror, letting the vertices on the mirror plane slide along it, and letting the vertices of a crease line slide along it during the bad-quad relaxation. They moved the count of bad quads from 140 to about 134, so the cure has to change the topology (the engine: the way the cross field aligns to close parallel hard lines), not the vertex positions.
 - At 80,000 quads with symmetry X the rims show the same effect over a larger area (84 s on this part).
+
+## Soft Surface / Organic: first user tests of 0.16.9 (Blender 5.3, symmetry X)
+Screenshots in `docs/images/soft-surface`. Counts come from the panel's Last Result.
+
+| Model | Request | Faces | Quads | Poles | Time |
+|---|---|---|---|---|---|
+| Female head | 20K | 20,064 | 100 % | 52 | 9.5 s |
+| Female head (source already 116,662 quads) | 120K | 116,662 | 100 % | 124 | 17.5 s |
+| Helmet | 20K | 19,370 | 100 % | 193 | 13.2 s |
+| Helmet | 120K | 120,252 | 12 triangles | 635 | 30.3 s |
+| Dragon head (889K source triangles) | 120K | 123,639 | 16 triangles | 969 | 45 s |
+| Dragon head | 20K | 19,505 | 99.7 % (58 triangles, 2 n-gons) | 843 | 23.8 s |
+
+- The dragon at 20K with symmetry X reported "The result contains non-manifold edges". It could not be reproduced on the development machine (19,104 faces, 34 triangles, no non-manifold edges, same for 1, 2 and 4 threads). 0.16.9 adds a final repair of edges shared by three or more faces as a safety net; it is untested against the original case.
+- The result depends on the model's scale (the same dragon scaled 0.01x, 1x and 5x gives 19,441, 19,104 and 19,383 faces, and 103 s, 55 s and 54 s). Tolerances in the finishing steps are probably absolute; making them relative to the model is planned.
+- Triangles concentrate on the symmetry plane and at open necks.
 
 ## Known issues
 - **Intermittent seam gap with symmetry.** Once, on GitHub's continuous-integration runner, the matrix scenario "block-holes,

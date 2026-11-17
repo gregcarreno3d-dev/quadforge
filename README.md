@@ -7,6 +7,10 @@ It handles organic sculpts and, in preview, CAD / STL parts (3D printing, mechan
 
 ![Examples: an organic head at 20K quads, a hard-surface flange at 5K quads with creases kept, and the same flange without hard-edge detection](docs/images/examples.png)
 
+![Soft Surface / Organic, version 0.16.9: a female head at 20K quads (100 % quads, 52 poles, 9.5 s) and a viking-style helmet at 20K quads (100 % quads, 193 poles, 13 s), symmetry X](docs/images/soft-surface/head-20k-front.jpg)
+
+![Soft Surface / Organic, version 0.16.9: a dragon head sculpt (889K source triangles) remeshed to 120K quads with symmetry X (45 s, 16 triangles)](docs/images/soft-surface/dragon-120k-front.jpg)
+
 ![Organic and hard-surface results (screenshots from version 0.11, Blender 5.2.3: head, fairy, ant, plate). The method for organic models has not changed since](docs/images/results_0.11.jpg)
 
 Screenshots come from runs in Blender 5.2.3 on the author's machine; times depend on the computer.
@@ -104,6 +108,8 @@ Jacobian) on four of five models, the requested face count hit more closely, and
 still produces fewer irregular vertices at 80,000 faces and above. Triangle output follows the surface about twice as
 closely as Decimate, with near-equilateral triangles. The full tables, the metric definitions and a reproducible check
 on meshes you can regenerate are in the [technical report](docs/TECHNICAL_REPORT.md#7-evaluation).
+
+More 0.16.9 sculpt results (female head, helmet, dragon head at 20K and 120K quads) are in [`docs/images/soft-surface`](docs/images/soft-surface).
 
 ## Status
 
