@@ -37,6 +37,19 @@ that breaks another part, stays out of the code and is listed here.
 * Plate: slot-through-cylinder patch, corner notch; Ver-01 transition patch; Ver-03 zigzag at hole rims; "3 flipped edges" warning not reproduced locally.
 * Triangle counts differ between machines and thread counts (`FORGE_THREADS` reproduces a given count).
 
+## Soft Surface / Organic (measured with `tools/organic_battery.py`, 10K unless said)
+
+| Experiment | Result | Status |
+| --- | --- | --- |
+| Engine `--curv-adapt` (old Detail on Curves) on the female head | dropped by the safeguard (2x the poles): identical to Off | replaced |
+| Bend map from averaged normals as `quadforge_density`, ratio 2.5, patch 2 quad lengths | head back 0.69 to 0.18 %, Hada 5K 1.54 to 0.67 %, dragon feat 8.0 to 2.0 %, poles equal or fewer (dragon 55 to 73 per 1000) | in the add-on (Detail on Curves) |
+| Same with symmetry at ratio 2.5 | seam corners and a few triangles at the mouth groove of the synthetic head (folded strips) | ratio halved with symmetry |
+| Ratio 2.0 / 3.0, patch 1 / 2 / 3, power 2 | not monotonic (Hada back 0.56 / 0.27 / 0.31 %); patch 2 gave fewer poles and fewer bad quads than patch 1; power 2 worse | patch 2, power 1 |
+| Joining leftover triangles in the final mesh (face angle 45, shape 75) | no change: the leftovers are single triangles inside quads | not kept |
+| Hand at 5K | feat 0.25 to 0.80 %: fingers are curved everywhere, so the map spends faces on them | known weakness |
+
+Baseline (engine curvature, 10K, no symmetry): head back 0.69 %, Hada 0.42 %, hand 0.08 %, helmet 2.3 %, dragon 3.7 % (feat 8.0 %).
+
 ## Ideas not started (Soft Surface / Organic)
 
 Soft version of the Hard Surface detection: continuous measures that weight the size and direction fields instead of hard edges.

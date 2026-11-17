@@ -114,8 +114,9 @@ SPANISH_FROM_TEXTS = {
     texts.LABEL_GUIDE_NONE: "Aún no hay aristas guía. Selecciona aristas en Modo Edición y pulsa Marcar guía de flujo.",
     texts.HELP_CURVATURE: (
         "Detalle en curvas pone caras más pequeñas donde la superficie se curva con fuerza (párpados, labios, "
-        "fosas nasales, borde de las orejas) y hace que las filas de caras sigan esas líneas, sin pintar nada. Prueba Medio en caras y personajes. Puede añadir "
-        "algunos vértices irregulares en otras zonas, así que déjalo en Off para formas simples o mecánicas."),
+        "fosas nasales, borde de las orejas) y hace que las filas de caras sigan esas líneas, sin pintar nada. Mide cuánto gira la superficie dentro "
+        "de una cara, así que el ruido más fino que una cara no cuenta, y con simetría el efecto es más suave. Prueba Medio en caras y personajes, y "
+        "déjalo en Off para formas simples o mecánicas."),
     texts.LABEL_NO_GROUPS: "Este objeto aún no tiene vertex groups.",
     texts.GUIDE_STEP_8: (
         "8. Lee 'Último resultado': un porcentaje alto de quads y pocos polos significan topología "

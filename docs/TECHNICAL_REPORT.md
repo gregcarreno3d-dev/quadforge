@@ -175,7 +175,7 @@ Without help, a uniform grid under-resolves thin parts. `sizefield.rs` computes 
   `rho / ratio`, not at the size of the model: a wider ball asks for no refinement, and from a point deep inside a
   ball-like shape every triangle is about equally far, so a BVH cannot prune (this stage took a minute on 80,000
   triangles before; it takes under a second now, with identical results on the test suite).
-* **Curvature** (user option "Detail on Curves"): a quad edge should not turn the surface by more than a given angle, so
+* **Curvature** (engine option `--curv-adapt`, no longer what "Detail on Curves" uses; see `core/form_detail.py`): a quad edge should not turn the surface by more than a given angle, so
   the edge length is limited to *angle / curvature* (curvature smoothed over about half a quad so mesh noise does not
   count). This puts smaller faces on eyelids, lips, nostrils and ear rims.
 * The result is **graded**: the size never changes faster than a fixed rate per unit of distance

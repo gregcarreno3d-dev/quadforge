@@ -39,6 +39,7 @@ import numpy as np
 
 from .. import planning
 from . import detail
+from . import form_detail
 from . import features
 from . import geometry as geo
 from . import mesh_io as mio
@@ -68,6 +69,8 @@ TARGET_MISS_WARNING_FRACTION = 0.15       # warn if the quad count is 15% away f
 SYMMETRY_MATCH_WARNING_THRESHOLD = 0.9    # warn if fewer than 90% of sampled points match
 WORK_OBJECT_NAME = "QuadForge_work"
 DENSITY_ATTRIBUTE = "quadforge_density"
+FORM_DETAIL_RATIOS = {"LOW": 1.8, "MEDIUM": 2.5, "HIGH": 3.5}   # Detail on Curves: edge length ratio between flat and sharply bent areas
+FORM_DETAIL_SYMMETRY_SHARE = 0.5                    # with symmetry the Detail on Curves ratio is reduced to this share of its excess over 1
 CURVATURE_ANGLES = {"OFF": 0.0, "LOW": 0.35, "MEDIUM": 0.22, "HIGH": 0.15}   # radians a face edge may turn the surface
 
 
@@ -339,6 +342,12 @@ def _attach_density(mesh, original, settings: RemeshSettings, warnings: list, zo
     by_zone = _zone_multiplier(mesh, settings, zone_labels, zone_names or {})
     if by_zone is not None:
         multiplier = by_zone if multiplier is None else np.minimum(multiplier, by_zone)
+    ratio = FORM_DETAIL_RATIOS.get(settings.curvature_detail)
+    if ratio is not None and settings.output == "QUADS":
+        if settings.sym_x or settings.sym_y or settings.sym_z:
+            ratio = 1.0 + (ratio - 1.0) * FORM_DETAIL_SYMMETRY_SHARE   # a strong gradient next to the cut leaves seam corners
+        by_form = form_detail.form_multiplier(mesh, settings.target_quads, ratio)
+        multiplier = by_form if multiplier is None else np.minimum(multiplier, by_form)
     if multiplier is None:
         return
     attribute = mesh.attributes.get(DENSITY_ATTRIBUTE)
@@ -751,7 +760,7 @@ def _remesh_once(context, mesh, plan: sym.SymmetryPlan, settings: RemeshSettings
         target_faces=int(quads_for_this_piece),
         preserve_sharp=hard_edge_count > 0 or plan.cut_after,
         fast_seams=plan.cut_after and hard_edge_count == 0,
-        curv_angle=CURVATURE_ANGLES.get(settings.curvature_detail, 0.0),
+        curv_angle=0.0 if settings.curvature_detail in FORM_DETAIL_RATIOS else CURVATURE_ANGLES.get(settings.curvature_detail, 0.0),
         preserve_boundary=settings.preserve_boundary or plan.is_active,  # the cut edge must stay put
         seed=settings.seed,
         output=settings.output,
@@ -1218,7 +1227,7 @@ def run_steps(context, original, settings: RemeshSettings,
             count_tried = True
             requested = max(1000, round(target * (0.5 + 0.5 * target / max(1, faces))))
             retry = dataclasses.replace(settings, target_quads=requested, thin_band_floor=floor)
-        elif (not fine_tried and settings.soft_bevels and settings.soft_bevel_detail < 1.0
+        elif (not fine_tried and settings.use_surface_analysis and settings.soft_bevels and settings.soft_bevel_detail < 1.0
               and _layout_flaws(first.object.data) / max(1, faces) > SECOND_CHANCE_FLAW_SHARE):
             fine_tried = True
             retry = dataclasses.replace(settings, thin_band_floor=THIN_BAND_FINE_FLOOR)

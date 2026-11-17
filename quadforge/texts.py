@@ -70,8 +70,9 @@ HELP_ENGINE_FORGE = (
     "cannot crash Blender.")
 HELP_CURVATURE = (
     "Detail on Curves puts smaller faces where the surface bends sharply, like eyelids, lips, nostrils "
-    "and ear rims, and makes the face rows follow those lines, without painting anything. Try Medium on "
-    "faces and characters. It can add irregular vertices elsewhere, so leave it Off for plain or mechanical shapes."
+    "and ear rims, and makes the face rows follow those lines, without painting anything. It measures how much "
+    "the surface turns within one face, so noise finer than a face does not count, and with symmetry the effect is "
+    "milder. Try Medium on faces and characters, and leave it Off for plain or mechanical shapes."
 )
 
 HELP_GUIDES = (

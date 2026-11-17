@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+- **Detail on Curves rebuilt (Soft Surface / Organic):** it now builds its own density map from the bend of the form (normals averaged over about two quad lengths, so sculpt noise below one quad does not count) and the engine uses it as per-vertex density, instead of the engine's curvature option, which on heads was usually thrown away because it doubled the irregular vertices. Same face count, same or fewer poles, less detail lost: female head 10K `back` error 0.69 % to 0.18 % of the diagonal (0.58 % to 0.32 % with symmetry X), Hada 5K 1.54 % to 0.67 %, dragon head 10K `feat` error 8.0 % to 2.0 %. Weaker on a hand at 5K (0.25 % to 0.80 % on the most curved vertices) and neutral on the helmet. With symmetry the ratio is halved (a strong gradient next to the cut left seam corners). Hard Surface is not affected (Detail on Curves Off).
+- `tools/organic_battery.py` and `quadforge/tests/blender_form_detail_test.py`; the head test now allows up to 4 triangles (the cleanup of folded strips at the mouth groove can leave a few).
+- The second chance with finer strips only runs in Hard Surface (it did nothing for sculpts and cost a second remesh).
+
 ## 0.16.8
 - Fixed: the corrected rerun could keep a layout with a vertex of two edges on the centre seam (head test with flow guides); a rerun with such a corner is now never kept.
 - **Corpus (20 synthetic CAD parts, Hard Surface):** 20 of 20 pass at 20K quads (was 18), 19 of 20 at 30K (flange 7.6 %; it passes at 42K, which is what the new warning suggests), 15 of 20 at 10K. Real parts (Plate, Cylinder Ver-01, Ver-02 at 30K): 3 of 3.

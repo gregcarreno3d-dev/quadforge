@@ -46,6 +46,7 @@ quadforge/                    the add-on (this folder is what Blender installs)
     detail.py                 relax badly shaped quads and project them back on the source
     uvtransfer.py             UV transfer by projection onto the original surface
     zonedata.py               Face Sets and sculpt-mask transfer
+    form_detail.py            Detail on Curves: per-vertex edge-length multiplier from the bend of the form
     profiling.py              stage timer + peak memory
     backends/
       base.py                 Backend, RemeshRequest, BackendError
@@ -57,7 +58,7 @@ quadforge/                    the add-on (this folder is what Blender installs)
   docs/                       user guide, decisions, status and limits, benchmark protocol
 engine-rs/src/                FORGE engine source (Rust; see engine-rs/README.md for the work-area map)
 engine/src/                   original C++17 engine (used until 0.14; reference, not shipped)
-tools/                        build.py (Zig cross-compiler), package.py, make_delivery.py, quality_metrics.py, cad_battery.py,
+tools/                        build.py (Zig cross-compiler), package.py, make_delivery.py, quality_metrics.py, cad_battery.py, organic_battery.py,
                               meshgen.py (synthetic meshes), fmesh.py, stlio.py, harness.py
 tests/                        early engine tests t01..t05
 docs/                         this documentation (technical report, this file, images/)
@@ -120,7 +121,15 @@ and opened edges (it broke the matrix tests). Do not collapse when there is no s
 count is 15 % off), `SYMMETRY_MATCH_WARNING_THRESHOLD = 0.9`, `CURVATURE_ANGLES = {OFF: 0, LOW: 0.35, MEDIUM: 0.22,
 HIGH: 0.15}` radians, `ENGINE_TIMEOUT_SECONDS = 3 h` (a safety net in `backends/forge.py`).
 
-### 2.3 Detail on Curves safeguard (in `backends/forge.py`)
+### 2.3 Detail on Curves (`core/form_detail.py`) and its old safeguard (in `backends/forge.py`)
+
+Since the Unreleased version Detail on Curves no longer uses the engine's `--curv-adapt`. `form_detail.form_multiplier`
+averages the vertex normals over a patch about two quad lengths wide (numpy diffusion over the mesh edges, no scipy), takes
+`1 - |mean normal|` as the bend at that scale, and turns it into the edge-length multiplier of the `quadforge_density`
+attribute (1 on the flatter half of the vertices, `1 / ratio` from the 97th percentile up; ratios LOW 1.8, MEDIUM 2.5,
+HIGH 3.5, `FORM_DETAIL_RATIOS` in `pipeline.py`; with symmetry the excess over 1 is halved, `FORM_DETAIL_SYMMETRY_SHARE`, because
+a strong gradient next to the cut leaves seam corners). The engine then gets `curv_angle = 0`. The safeguard below stays for
+anyone who calls the backend with `curv_angle` directly.
 
 If Detail on Curves is on, output is QUADS and the result has at least 5,000 vertices, and more than 0.9 % of the
 vertices are irregular (`CURVATURE_RETRY_FRACTION = 0.009`), the backend runs the engine a second time without it and
