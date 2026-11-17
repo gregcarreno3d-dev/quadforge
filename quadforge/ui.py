@@ -394,6 +394,7 @@ class QUADFORGE_PT_density(_QuadForgePanel, bpy.types.Panel):
         layout.separator()
         draw_wrapped_text(layout, context, translate(texts.HELP_CURVATURE))
         layout.prop(settings, "curvature_detail")
+        layout.operator("quadforge.analyze_form", icon="COLOR")
 
 
 # --------------------------------------------------------------------------- result and help

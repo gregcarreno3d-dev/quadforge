@@ -72,7 +72,8 @@ HELP_CURVATURE = (
     "Detail on Curves puts smaller faces where the surface bends sharply, like eyelids, lips, nostrils "
     "and ear rims, and makes the face rows follow those lines, without painting anything. It measures how much "
     "the surface turns within one face, so noise finer than a face does not count, and with symmetry the effect is "
-    "milder. Try Medium on faces and characters, and leave it Off for plain or mechanical shapes."
+    "milder. Try Medium on faces and characters, and leave it Off for plain or mechanical shapes. Analyze Form paints "
+    "where the smaller faces will go before you remesh."
 )
 
 HELP_GUIDES = (

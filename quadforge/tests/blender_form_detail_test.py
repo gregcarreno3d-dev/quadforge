@@ -67,5 +67,31 @@ check("pipeline result is quads", result.levels[0].stats["quads"] == result.leve
 check("pipeline result is closed", result.levels[0].stats["non_manifold_edges"] == 0 and result.levels[0].stats["border_edges"] == 0)
 check("face count near the request", abs(result.levels[0].stats["faces"] - 3000) / 3000 < 0.1)
 
+# Analyze Form (preview): colours the mesh, changes nothing else
+bpy.ops.object.select_all(action="DESELECT")
+obj.select_set(True)
+bpy.context.view_layer.objects.active = obj
+bpy.context.scene.quadforge.curvature_detail = "MEDIUM"
+bpy.context.scene.quadforge.target_quads = 3000
+faces_before = len(sphere.polygons)
+check("Analyze Form runs", bpy.ops.quadforge.analyze_form() == {"FINISHED"})
+form_colors = sphere.color_attributes.get("QuadForge Form")
+check("Analyze Form writes a colour per vertex", form_colors is not None and len(form_colors.data) == len(sphere.vertices))
+red = np.array([c.color[0] for c in form_colors.data])
+check("bumped area is red, flat area is blue", red.max() > 0.8 and red.min() < 0.2, f"{red.min():.2f}..{red.max():.2f}")
+check("Analyze Form does not change the mesh", len(sphere.polygons) == faces_before)
+bpy.context.scene.quadforge.curvature_detail = "OFF"
+check("Analyze Form with Detail Off is refused", bpy.ops.quadforge.analyze_form() == {"CANCELLED"})
+
+# the cleanup restores a flipped face next to its neighbour (a slit sewn together can leave one)
+bm = bmesh.new()
+bmesh.ops.create_grid(bm, x_segments=3, y_segments=3, size=1.0)
+bm.faces.ensure_lookup_table()
+bmesh.ops.reverse_faces(bm, faces=[bm.faces[4]])
+check("test setup has flipped edges", pipeline._flipped_edges(bm) > 0)
+pipeline._restore_winding(bm)
+check("winding restored", pipeline._flipped_edges(bm) == 0)
+bm.free()
+
 print("\nALL PASSED" if not fails else f"\n{len(fails)} FAILED: {fails}")
 sys.exit(1 if fails else 0)

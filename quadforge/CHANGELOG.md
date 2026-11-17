@@ -1,8 +1,14 @@
 # Changelog
 
-## 0.16.9
+## 0.17.0
+- **Fixed (Hard Surface): flipped faces after the cleanup.** Sewing the slit left by a removed folded strip could leave faces of one sheet reversed against their neighbours (flange at 25K: 53 flipped edges, while the engine output had none). The cleanup now makes every connected piece point the same way again, keeping the side it faced, and only when that lowers the number of flipped edges.
+- **Detail on Curves, smoother map:** the averaging patch is now about three quad lengths wide (was two) and the cap on smoothing steps is 450 (was 200, which made huge sculpts use a smaller patch than asked). Measured at 10K quads with symmetry X: Hada poles 27 to 16 per 1,000 faces and detail lost on curved areas 1.73 to 0.91 %, female head 0.90 to 0.74 %, hand at 5K 0.70 (Detail Off) to 0.58 %, dragon 2.46 to 2.31 % and 2.2x faster.
+- **New button Analyze Form (preview)** (Detail on Curves panel): paints the active mesh red where Detail on Curves will place smaller faces and blue where the normal size stays, for the current Target Faces, Detail on Curves and symmetry. Nothing is remeshed.
+- **Warning for a local group of untidy faces:** a group of 10 or more touching triangles or squeezed quads is reported with its position even when the overall share of flaws is under 3 %.
 - **Seam triangles:** two triangles that mirror each other and share an edge on the symmetry plane are merged into one convex quad (dragon head 20K with symmetry X: 34 to 16 triangles).
 - **Edges shared by three or more faces are repaired at the end of the cleanup:** the two biggest faces stay, the others are dropped and the small hole is closed, only if that lowers the number of open plus non-manifold edges. Reported on the dragon head at 20K with symmetry X ("The result contains non-manifold edges", 58 triangles); not reproduced here, so this is a safety net, unit-checked on a three-sheet edge.
+
+## 0.16.9
 - **Detail on Curves rebuilt (Soft Surface / Organic):** it now builds its own density map from the bend of the form (normals averaged over about two quad lengths, so sculpt noise below one quad does not count) and the engine uses it as per-vertex density, instead of the engine's curvature option, which on heads was usually thrown away because it doubled the irregular vertices. Same face count, same or fewer poles, less detail lost: female head 10K `back` error 0.69 % to 0.18 % of the diagonal (0.58 % to 0.32 % with symmetry X), Hada 5K 1.54 % to 0.67 %, dragon head 10K `feat` error 8.0 % to 2.0 %. Weaker on a hand at 5K (0.25 % to 0.80 % on the most curved vertices) and neutral on the helmet. With symmetry the ratio is halved (a strong gradient next to the cut left seam corners). Hard Surface is not affected (Detail on Curves Off).
 - `tools/organic_battery.py` and `quadforge/tests/blender_form_detail_test.py`; the head test now allows up to 4 triangles (the cleanup of folded strips at the mouth groove can leave a few).
 - The second chance with finer strips only runs in Hard Surface (it did nothing for sculpts and cost a second remesh).

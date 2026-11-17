@@ -1,6 +1,6 @@
 # QuadForge: architecture and behaviour, written for AI assistants
 
-Version described: **0.16.9** (FORGE engine in Rust since 0.15.0; chamfer/bevel detector since 0.15.1; whole-model surface analysis since 0.16.0). Licence: GPL-3.0-or-later. Everything here was checked against the code in this
+Version described: **0.17.0** (FORGE engine in Rust since 0.15.0; chamfer/bevel detector since 0.15.1; whole-model surface analysis since 0.16.0). Licence: GPL-3.0-or-later. Everything here was checked against the code in this
 repository. If this file and the code disagree, **the code wins**; please fix this file.
 
 This document is meant to be loaded whole into a model's context. It is dense and flat on purpose: sections are
@@ -123,8 +123,8 @@ HIGH: 0.15}` radians, `ENGINE_TIMEOUT_SECONDS = 3 h` (a safety net in `backends/
 
 ### 2.3 Detail on Curves (`core/form_detail.py`) and its old safeguard (in `backends/forge.py`)
 
-Since the Unreleased version Detail on Curves no longer uses the engine's `--curv-adapt`. `form_detail.form_multiplier`
-averages the vertex normals over a patch about two quad lengths wide (numpy diffusion over the mesh edges, no scipy), takes
+Since 0.16.9 Detail on Curves no longer uses the engine's `--curv-adapt`. `form_detail.form_multiplier`
+averages the vertex normals over a patch about three quad lengths wide (numpy diffusion over the mesh edges, no scipy), takes
 `1 - |mean normal|` as the bend at that scale, and turns it into the edge-length multiplier of the `quadforge_density`
 attribute (1 on the flatter half of the vertices, `1 / ratio` from the 97th percentile up; ratios LOW 1.8, MEDIUM 2.5,
 HIGH 3.5, `FORM_DETAIL_RATIOS` in `pipeline.py`; with symmetry the excess over 1 is halved, `FORM_DETAIL_SYMMETRY_SHARE`, because

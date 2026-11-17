@@ -57,6 +57,22 @@ Baseline (engine curvature, 10K, no symmetry): head back 0.69 %, Hada 0.42 %, ha
 - Triangles cluster on the symmetry plane (x about 0) and at the neck end (z about -60); without symmetry only 8 triangles.
 - Kept: `_split_non_manifold` as a final safety net.
 
+## 0.17.0 tuning of Detail on Curves (organic battery, 10K quads, symmetry X; hand 5K without)
+Single runs, so differences under about 0.1 % are noise (the layout is chaotic at that level).
+| Setting | Hand 5K feat | Hada 10K poles / feat | Head 10K feat | Dragon 10K | Kept |
+|---|---|---|---|---|---|
+| patch 2.0 quads (0.16.9) | 0.63 | 27 / 1.73 | 0.90 | bad 0.54 %, feat 2.46, 150 s | replaced |
+| patch 3.0, steps capped at 200 | 0.58 | 16 / 0.91 | 0.74 | bad 1.46 %, feat 2.86 | cap raised |
+| patch 3.0, steps up to 450 | 0.58 | 16 / 0.91 | 0.74 | bad 1.12 %, feat 2.31, 73 s | **kept** |
+| patch 2.5 | - | 21 / 1.14 | 1.14 | same as 3.0 capped | no |
+| patch 4.0 | - | 18 / 1.28 | 1.02 | - | no |
+| percentile 30 / 90 or 70 / 99 (hand) | 0.69 to 0.90 | - | - | - | no |
+| Detail Off (reference) | 0.70 | 11.6 / 2.11 | - | - | - |
+- The "hand at 5K is worse than Off" seen with 0.16.9 does not hold with the current metric: Medium 0.58 against Off 0.70.
+- The 200-step cap made the dragon (890K source) use a smaller patch than asked; at 450 it is as asked, and faster overall because the engine gets a smoother density.
+- Weakness left: dragon at 10K has 1.1 % of quads with a scaled Jacobian under 0.3 (0.5 % with the old patch). It is a stress case (a complex head in 10K quads).
+- Seen on the way: sewing the slit of a removed folded strip reversed faces on some CAD parts (flange at 25K: 53 flipped edges). Kept: `_restore_winding` after the cleanup.
+
 ## Ideas not started (Soft Surface / Organic)
 
 Soft version of the Hard Surface detection: continuous measures that weight the size and direction fields instead of hard edges.

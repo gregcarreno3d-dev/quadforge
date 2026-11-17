@@ -10,8 +10,8 @@ Numpy only (Blender's Python has no scipy). The result is written to the ``quadf
 """
 import numpy as np
 
-SMOOTH_SCALE = 2.0        # the averaging patch is this many quad lengths wide (a wider patch makes a gentler gradient)
-MAX_STEPS = 200           # diffusion steps (a huge mesh with tiny quads is capped: the effect only gets a little wider)
+SMOOTH_SCALE = 3.0        # the averaging patch is this many quad lengths wide (a wider patch makes a gentler gradient)
+MAX_STEPS = 450           # diffusion steps (a huge mesh with tiny quads is capped: the effect only gets a little wider)
 LOW_PERCENTILE = 50.0     # vertices at or below this bend are left at the normal size
 HIGH_PERCENTILE = 97.0    # vertices at or above this bend get the full ratio
 

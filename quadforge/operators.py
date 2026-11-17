@@ -478,6 +478,52 @@ bevels, and list the borders between them"""
         return {"FINISHED"}
 
 
+class QUADFORGE_OT_analyze_form(bpy.types.Operator):
+    """Paint the active mesh with where Detail on Curves will place smaller faces (red) and larger ones (blue), for the
+current Target Faces and Detail on Curves setting. Nothing is remeshed"""
+    bl_idname = "quadforge.analyze_form"
+    bl_label = "Analyze Form (preview)"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        active = context.active_object
+        return active is not None and active.type == "MESH"
+
+    def execute(self, context):
+        from .core import form_detail, pipeline
+        obj = context.active_object
+        settings = context.scene.quadforge
+        ratio = pipeline.FORM_DETAIL_RATIOS.get(settings.curvature_detail)
+        if not ratio:
+            self.report({"WARNING"}, "Detail on Curves is Off: choose Low, Medium or High to see where it adds detail.")
+            return {"CANCELLED"}
+        if obj.mode == "EDIT":
+            bpy.ops.object.mode_set(mode="OBJECT")
+        mesh = obj.data
+        if any((settings.sym_x, settings.sym_y, settings.sym_z)):
+            ratio = 1.0 + (ratio - 1.0) * pipeline.FORM_DETAIL_SYMMETRY_SHARE   # the same reduction the remesh applies
+        multiplier = form_detail.form_multiplier(mesh, int(settings.target_quads), ratio)
+        weight = np.clip((1.0 - multiplier) / max(1.0 - 1.0 / ratio, 1e-9), 0.0, 1.0)   # 0 = normal size .. 1 = finest
+        colors = np.stack([weight, 0.25 + 0.35 * (1.0 - np.abs(2.0 * weight - 1.0)), 1.0 - weight,
+                           np.ones_like(weight)], axis=1).astype(np.float32)
+        attribute = mesh.color_attributes.get("QuadForge Form")
+        if attribute is None or attribute.domain != "POINT":
+            if attribute is not None:
+                mesh.color_attributes.remove(attribute)
+            attribute = mesh.color_attributes.new(name="QuadForge Form", type="FLOAT_COLOR", domain="POINT")
+        attribute.data.foreach_set("color", colors.ravel())
+        mesh.color_attributes.active_color = attribute
+        for area in context.screen.areas:
+            if area.type == "VIEW_3D":
+                area.spaces[0].shading.type = "SOLID"
+                area.spaces[0].shading.color_type = "VERTEX"
+        finer = 100.0 * float(np.mean(weight > 0.5))
+        self.report({"INFO"}, f"{finer:.0f}% of the surface gets clearly smaller faces (red); the rest keeps the normal size "
+                              "(blue). Colours are in the 'QuadForge Form' colour attribute.")
+        return {"FINISHED"}
+
+
 class QUADFORGE_OT_select_borders(bpy.types.Operator):
     """Select the edges that separate two surfaces (run Analyze Surfaces first)"""
     bl_idname = "quadforge.select_borders"

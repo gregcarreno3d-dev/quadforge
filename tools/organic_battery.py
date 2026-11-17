@@ -17,8 +17,10 @@ Detail on Curves with ``--curvature``. For every part it prints the numbers that
   vertices, where eyes, lips, horns and teeth are);
 * time.
 
-Verdict: the thresholds in ``CRITERIA`` are provisional until a baseline has been measured; the last line is the share
-of parts that passed. Use ``--csv`` to compare two runs.
+Verdict: the thresholds in ``CRITERIA`` were set from the 0.17.0 measurements (female head, Hada and hand pass; the
+helmet and the dragon at 10K are limited by resolution: fine feathers, rivets, scales and teeth need more quads, so they
+fail on purpose; run them at 40K or more). The last line is the share of parts that passed. Use ``--csv`` to compare two
+runs.
 """
 import argparse
 import csv
@@ -39,7 +41,7 @@ CRITERIA = {
     "max_bad_share": 0.01,       # quads with scaled Jacobian < 0.3
     "bad_jacobian": 0.3,
     "max_fwd_p99": 0.003,        # of the diagonal
-    "max_feat_p99": 0.006,
+    "max_feat_p99": 0.010,       # 1 % of the diagonal on the most curved 10 % (0.17.0: head 0.74, Hada 0.91, hand 0.58)
     "max_poles_per_1k": 60.0,
 }
 

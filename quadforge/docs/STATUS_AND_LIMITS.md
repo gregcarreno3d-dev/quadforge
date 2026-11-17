@@ -1,14 +1,14 @@
-# Status and limits — QuadForge 0.16.9
+# Status and limits — QuadForge 0.17.0
 
 See `EXPERIMENT_LOG.md` for the short list of what was tried, kept and rejected.
 
-## Current status (0.16.9)
+## Current status (0.17.0)
 - **Surface analysis and chamfer/bevel detection (preview).** Tested on real CAD parts (a cylinder plate, a perforated plate, a flange, a spool-like part) and on synthetic parts (prisms, frustums, a tilted frustum, a UV sphere, a bracket with a tilted hole, a six-hole flange, a dome, a cone on a cylinder, an off-centre boss). Unit tests live in `engine-rs/src/stages/surfaces.rs`; the Blender test is `tests/blender_surfaces_test.py`.
 - **Known limits of the analysis:** surfaces of revolution are searched only about the X, Y and Z axes through the centre of the model; fillets made of very thin facets and coarse 3-facet fillets are only partly detected; with *Use Surface Analysis* about 2 % of the faces can stay triangles (isolated ones in the quad flow); the detector is in the Linux engine checked into the repository, and in Windows / macOS builds made by CI.
 - **Speed on CAD parts:** a plate with a strong size variation falls back after the second attempt (about 12 s instead of 26 s at 4K quads).
 
 ## Tested
-- 0.16.8 Blender suite (hard, integration, surfaces, bevel, forge, zone_detail, zones, guides, head, preview, subdiv, uv, vgzones, surface): all pass; the matrix gives 66 of 67 (gear-like with 30 hard edges: 97 % quads, same as 0.16.7).
+- 0.17.0 Blender suite (hard, integration, surfaces, bevel, forge, zone_detail, zones, guides, head, preview, subdiv, uv, vgzones, surface): all pass; the matrix gives 66 of 67 (gear-like with 30 hard edges: 97 % quads, same as 0.16.7).
 - FORGE engine (Linux): sphere, torus, box with 12 exact hard edges, hemisphere with border, cylinder, density (length ratio 2.99 vs 3 requested), meshes with defects, 120 random cases with no failures, 1.3 M tris → 40 K in ~7 s (peak ~390 MB).
 - Python backend with the real engine through a simulated mesh.
 - Windows and macOS binaries are built natively by CI and pass the engine tests there; real-machine use is still limited.
@@ -113,6 +113,15 @@ Measured on the Ver-03 test part (a disc with four holes, a revolution wall and 
 - Tried and **not** enough (changes were reverted): joining triangle pairs again after the mirror, letting the vertices on the mirror plane slide along it, and letting the vertices of a crease line slide along it during the bad-quad relaxation. They moved the count of bad quads from 140 to about 134, so the cure has to change the topology (the engine: the way the cross field aligns to close parallel hard lines), not the vertex positions.
 - At 80,000 quads with symmetry X the rims show the same effect over a larger area (84 s on this part).
 
+## Soft Surface / Organic: measured with 0.17.0 (`tools/organic_battery.py`, 10K quads, symmetry X)
+| Model | Quads | Poles / 1000 | Scaled Jacobian < 0.3 | Detail lost on the most curved 10 % (p99) | Time |
+|---|---|---|---|---|---|
+| Female head | 99.9 % | 7.0 | 0.08 % | 0.74 % | 17 s |
+| Hada | 100 % | 16.0 | 0.03 % | 0.91 % | 19 s |
+| Helmet | 100 % | 14.2 | 0.04 % | 2.2 % | 44 s |
+| Dragon head (890K source) | 99.9 % | 74.5 | 1.1 % | 2.3 % | 74 s |
+Hand at 5K without symmetry: 100 % quads, 11 poles per 1000, 0.58 %, 5 s. The helmet and the dragon are limited by resolution at 10K (feathers, rivets, scales, teeth need more quads). Results depend slightly on the machine (floating-point rounding is amplified by the layout).
+
 ## Soft Surface / Organic: first user tests of 0.16.9 (Blender 5.3, symmetry X)
 Screenshots in `docs/images/soft-surface`. Counts come from the panel's Last Result.
 
@@ -145,6 +154,10 @@ Screenshots in `docs/images/soft-surface`. Counts come from the panel's Last Res
 
 ## Suggested roadmap
 0.5.x: fixes after the author's tests. 0.6: lattice extraction. 0.7: integer-grid parametrization. 0.8: alignment to hard edges. Next: borders, a faster solver, thin-part handling. Then the Rust port (parallel version) and publishing.
+
+## CAD battery results (0.17.0)
+
+Same corpus and settings as 0.16.8: **20 of 20 at 20K quads, 18 of 20 at 30K (flange 7.6 %, heat sink 3.7 %), 15 of 20 at 10K** (countersunk, enclosure, flange, gear, heat sink); real parts at 30K (Plate and Cylinder Ver-01, Ver-02, Ver-03): 4 of 4. The heat sink at 30K was 3.7 % flaws already in the version just before 0.17.0, so it is the near-threshold case of a part with thin fins, not a result of the 0.17.0 changes. What 0.17.0 fixed here is orientation: the flange at 25K came out with 53 flipped edges (engine output had none) because sewing the slit of a removed folded strip reversed faces; the cleanup now restores a consistent winding.
 
 ## CAD battery results (0.16.8)
 

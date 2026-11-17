@@ -116,7 +116,7 @@ SPANISH_FROM_TEXTS = {
         "Detalle en curvas pone caras más pequeñas donde la superficie se curva con fuerza (párpados, labios, "
         "fosas nasales, borde de las orejas) y hace que las filas de caras sigan esas líneas, sin pintar nada. Mide cuánto gira la superficie dentro "
         "de una cara, así que el ruido más fino que una cara no cuenta, y con simetría el efecto es más suave. Prueba Medio en caras y personajes, y "
-        "déjalo en Off para formas simples o mecánicas."),
+        "déjalo en Off para formas simples o mecánicas. Analyze Form pinta dónde irán las caras más pequeñas antes de remallar."),
     texts.LABEL_NO_GROUPS: "Este objeto aún no tiene vertex groups.",
     texts.GUIDE_STEP_8: (
         "8. Lee 'Último resultado': un porcentaje alto de quads y pocos polos significan topología "

@@ -1,4 +1,4 @@
-# User guide — QuadForge 0.16.9
+# User guide — QuadForge 0.17.0
 
 ## 1. Basic flow (3 steps)
 1. Select the mesh (triangles or quads, any density). The add-on switches to Object Mode by itself.
@@ -25,6 +25,7 @@ Above about 6 million faces (FORGE) Blender asks for confirmation.
 - **Symmetry:** local X/Y/Z axes. One half is remeshed, then mirrored and welded. Check *Plane At* if the origin is not centred.
 - **Extra Levels:** `15K, 10K, 5K, 4K` builds several levels in one run (each level is built from the source).
 - **Density (FORGE):** pick a *vertex group*; where the weight is 1 the edges are *Detail Ratio* times shorter (4 ⇒ about 16× more faces there). Paint it in Weight Paint mode.
+- **Detail on Curves and Analyze Form (0.17):** in the Density panel, *Detail on Curves* (Low / Medium / High) puts smaller faces where the form bends sharply (eyelids, lips, nostrils, ear rims, horns, teeth) and bigger ones on flat areas, without painting anything. *Analyze Form (preview)* paints the active mesh red where those smaller faces will go and blue where the size stays, for the current Target Faces, Detail on Curves and symmetry; nothing is remeshed, so you can try Low / Medium / High and a different face count first. The colours are in the *QuadForge Form* colour attribute (switch the viewport to Vertex colour if it does not show).
 - **Detail by Zone (FORGE):** turn on an option in *Isolate Zones*, press *Refresh Zones*, then give each zone a number: above 1 gives that zone more faces, below 1 fewer. The engine keeps a clean quad flow, so the change is gradual (a 2 gives roughly 1.7 times more faces in the zone) and it is blended over about eight cells next to the zone border.
 - **Quick Preview:** makes a small copy (about 3,000 faces, usually a few seconds, about 6 s for a 248,000-face head) with your current settings so you can check the flow before the full run. It never touches your original and is deleted when you run the full Remesh.
 - **Subdivision Match (Advanced):** for quads that you will subdivide. A Subdivision Surface modifier shrinks a mesh; this option moves the vertices so the smooth result lands on your original surface (in a test the error after two levels fell about 40 times). Made for smooth, organic shapes: sharp creases stay where they are and no point moves more than a third of an edge.

@@ -693,32 +693,69 @@ FINAL_COUNT_RETRY = 0.05                            # one corrected rerun when t
 COUNT_TOLERANCE = 0.06                             # the engine itself lands within 4 to 6 percent: only beyond that is a count penalised
 
 
-def _layout_flaws(mesh) -> int:
-    """Triangles plus quads with a badly squeezed corner: how untidy a remeshed layout is (lower is better)."""
+def _flawed_faces(mesh) -> np.ndarray:
+    """Boolean mask of the faces that are triangles or quads with a badly squeezed corner."""
     face_count = len(mesh.polygons)
     if face_count == 0:
-        return 0
+        return np.zeros(0, dtype=bool)
     totals = np.empty(face_count, dtype=np.int64)
     mesh.polygons.foreach_get("loop_total", totals)
-    triangles = int(np.count_nonzero(totals == 3))
+    flawed = totals == 3
     starts = np.cumsum(totals) - totals
-    quad_starts = starts[totals == 4]
-    if len(quad_starts) == 0:
-        return triangles
+    quad_faces = np.flatnonzero(totals == 4)
+    if len(quad_faces) == 0:
+        return flawed
     loop_vertices = np.empty(len(mesh.loops), dtype=np.int64)
     mesh.loops.foreach_get("vertex_index", loop_vertices)
     positions = np.empty(len(mesh.vertices) * 3, dtype=np.float64)
     mesh.vertices.foreach_get("co", positions)
     positions = positions.reshape(-1, 3)
-    corners = positions[loop_vertices[quad_starts[:, None] + np.arange(4)[None, :]]]      # (n, 4, 3)
-    worst = np.ones(len(quad_starts))
+    corners = positions[loop_vertices[starts[quad_faces][:, None] + np.arange(4)[None, :]]]      # (n, 4, 3)
+    worst = np.ones(len(quad_faces))
     for corner in range(4):
         before = corners[:, corner - 1] - corners[:, corner]
         after = corners[:, (corner + 1) % 4] - corners[:, corner]
         sine = np.linalg.norm(np.cross(before, after), axis=1) / (
             np.linalg.norm(before, axis=1) * np.linalg.norm(after, axis=1) + 1e-30)
         worst = np.minimum(worst, sine)
-    return triangles + int(np.count_nonzero(worst < BAD_QUAD_SINE))
+    flawed[quad_faces[worst < BAD_QUAD_SINE]] = True
+    return flawed
+
+
+def _layout_flaws(mesh) -> int:
+    """Triangles plus quads with a badly squeezed corner: how untidy a remeshed layout is (lower is better)."""
+    return int(np.count_nonzero(_flawed_faces(mesh)))
+
+
+def _worst_flaw_cluster(mesh):
+    """(size, centre) of the largest group of untidy faces that touch each other (by a shared vertex), or (0, None).
+    A few such groups can be visible defects even when the overall share of flaws is tiny."""
+    flawed = np.flatnonzero(_flawed_faces(mesh))
+    if len(flawed) == 0:
+        return 0, None
+    totals = np.empty(len(mesh.polygons), dtype=np.int64)
+    mesh.polygons.foreach_get("loop_total", totals)
+    starts = np.cumsum(totals) - totals
+    loop_vertices = np.empty(len(mesh.loops), dtype=np.int64)
+    mesh.loops.foreach_get("vertex_index", loop_vertices)
+    face_vertices = [loop_vertices[starts[face]:starts[face] + totals[face]] for face in flawed]
+    labels = np.arange(len(flawed))
+    vertex_label = np.full(len(mesh.vertices), len(flawed), dtype=np.int64)
+    for _ in range(64):                                   # label propagation; groups are small, so this converges fast
+        vertex_label[:] = len(flawed)
+        for label, verts in zip(labels, face_vertices):
+            np.minimum.at(vertex_label, verts, label)
+        new = np.array([vertex_label[verts].min() for verts in face_vertices])
+        if np.array_equal(new, labels):
+            break
+        labels = new
+    sizes = np.bincount(labels)
+    biggest = int(np.argmax(sizes))
+    positions = np.empty(len(mesh.vertices) * 3, dtype=np.float64)
+    mesh.vertices.foreach_get("co", positions)
+    centre = positions.reshape(-1, 3)[np.concatenate(
+        [verts for label, verts in zip(labels, face_vertices) if label == biggest])].mean(axis=0)
+    return int(sizes[biggest]), centre
 
 
 def _remesh_with_engine(context, mesh, plan: sym.SymmetryPlan, settings: RemeshSettings,
@@ -906,6 +943,45 @@ def _tidy_seam(bm, plan: sym.SymmetryPlan, settings) -> None:
     if better:
         _run(bm)
     _split_non_manifold(bm)
+    _restore_winding(bm)
+
+
+def _flipped_edges(bm) -> int:
+    """Edges whose two faces walk the edge in the same direction (a flipped face next to its neighbour)."""
+    return sum(1 for edge in bm.edges
+               if len(edge.link_loops) == 2 and edge.link_loops[0].vert is edge.link_loops[1].vert)
+
+
+def _signed_volume(bm) -> float:
+    total = 0.0
+    for face in bm.faces:
+        first = face.verts[0].co
+        for index in range(1, len(face.verts) - 1):
+            total += first.dot(face.verts[index].co.cross(face.verts[index + 1].co))
+    return total
+
+
+def _restore_winding(bm) -> int:
+    """Making every face of each connected piece point the same way again after the cleanup merged vertices (sewing a slit
+    can leave a face of one sheet reversed against its neighbour). The piece keeps the side it faced before: if the
+    recalculation turned the whole mesh inside out, it is turned back. Returns how many edges were flipped before."""
+    before = _flipped_edges(bm)
+    if before == 0:
+        return 0
+    volume = _signed_volume(bm)
+    trial = bm.copy()
+    try:
+        bmesh.ops.recalc_face_normals(trial, faces=trial.faces[:])
+        if _signed_volume(trial) * volume < 0.0:
+            bmesh.ops.reverse_faces(trial, faces=trial.faces[:])
+        improved = _flipped_edges(trial) < before
+    finally:
+        trial.free()
+    if improved:
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+        if _signed_volume(bm) * volume < 0.0:
+            bmesh.ops.reverse_faces(bm, faces=bm.faces[:])
+    return before
 
 
 def _split_non_manifold(bm) -> int:
@@ -1251,6 +1327,7 @@ def _badness(mesh, target: int) -> float:
 
 
 THIN_WARNING_FLAW_SHARE = 0.03                      # warn when more than this share of the finished faces are flaws
+THIN_WARNING_CLUSTER = 10                           # warn about one group of this many touching flaws even when the share is low
 THIN_WARNING_MORE_QUADS = (1.4, 2.0)                # measured on the corpus: 1.4x fixes most parts, the thinnest need 2x
 
 
@@ -1263,6 +1340,12 @@ def _warn_thin_strips(result, target: int, settings: RemeshSettings) -> None:
     faces = len(mesh.polygons)
     share = _layout_flaws(mesh) / max(1, faces)
     if share <= THIN_WARNING_FLAW_SHARE:
+        size, centre = _worst_flaw_cluster(mesh)
+        if size >= THIN_WARNING_CLUSTER:
+            result.warnings.append(
+                f"A group of {size} untidy faces (triangles or squeezed quads) sits near "
+                f"({centre[0]:.2f}, {centre[1]:.2f}, {centre[2]:.2f}) in the object's units: a thin chamfer or rim is about "
+                f"as narrow as one quad there. A slightly different quad count often tidies it.")
         return
     factor = THIN_WARNING_MORE_QUADS[0 if share < 0.08 else 1]
     suggested = int(round(target * factor / 1000.0)) * 1000 or int(target * factor)
