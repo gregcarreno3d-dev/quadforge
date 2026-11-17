@@ -895,6 +895,7 @@ def _tidy_seam(bm, plan: sym.SymmetryPlan, settings) -> None:
             for _ in range(3):      # a corner next to another one is left for the next round
                 if not _dissolve_seam_corners(target, plan):
                     break
+            _merge_seam_triangle_pairs(target, plan)
 
     trial = bm.copy()
     try:
@@ -1041,6 +1042,43 @@ def _dissolve_seam_corners(bm, plan: sym.SymmetryPlan) -> int:
         bmesh.ops.delete(bm, geom=[vert], context="VERTS")    # takes the corner, its two edges and the two old faces
         merged_count += 1
     return merged_count
+
+
+def _merge_seam_triangle_pairs(bm, plan: sym.SymmetryPlan) -> int:
+    """Two triangles that mirror each other and share an edge lying on the symmetry plane form one convex quad when that
+    edge is dissolved (the half mesh had a triangle against the cut). Only merges that give a well-shaped, convex quad
+    are made. Returns how many pairs were merged."""
+    def _on_plane(vert) -> bool:
+        return any(abs(vert.co[axis] - plan.plane_offsets[axis]) <= 3.0 * plan.tolerance + 1e-9 for axis in plan.axes)
+
+    chosen, taken = [], set()
+    for edge in bm.edges:
+        if len(edge.link_faces) != 2 or not all(_on_plane(vert) for vert in edge.verts):
+            continue
+        first, second = edge.link_faces
+        if len(first.verts) != 3 or len(second.verts) != 3 or first in taken or second in taken:
+            continue
+        a, b = edge.verts
+        p = next(vert for vert in first.verts if vert not in (a, b))
+        q = next(vert for vert in second.verts if vert not in (a, b))
+        ring = [p.co, a.co, q.co, b.co]
+        if _quad_min_corner_sine(ring) < 0.2:
+            continue
+        normal = (a.co - p.co).cross(b.co - p.co)
+        if any(((ring[(k + 1) % 4] - ring[k]).cross(ring[(k + 2) % 4] - ring[(k + 1) % 4])).dot(normal) <= 0.0
+               for k in range(4)):
+            continue                    # a dart or a fold, not a convex quad
+        taken.update((first, second))
+        chosen.append(edge)
+    merged = 0
+    for edge in chosen:
+        if edge.is_valid and len(edge.link_faces) == 2:
+            try:
+                if bmesh.utils.face_join(list(edge.link_faces)) is not None:
+                    merged += 1
+            except ValueError:
+                pass
+    return merged
 
 
 def _join_leftover_triangles(mesh, face_angle_degrees: float = 20.0, shape_angle_degrees: float = 60.0) -> int:

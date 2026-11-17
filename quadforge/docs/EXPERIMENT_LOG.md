@@ -52,7 +52,8 @@ Baseline (engine curvature, 10K, no symmetry): head back 0.69 %, Hada 0.42 %, ha
 
 ## Found on the dragon head with the 0.16.9 tests (sym X, 20K)
 - Greg's run: 19,505 faces, 58 triangles, 2 n-gons, non-manifold warning. Here (same settings, 1/2/4 threads): 19,104 faces, 34 triangles, 6 n-gons, no non-manifold. Same result for every thread count, so the difference is the source or the scale.
-- **The result depends on the model's scale** (weld distances and tolerances are absolute): dragon at 0.01x gives 19,441 faces / 40 triangles and takes 103 s; at 1x 19,104 / 34 and 55 s; at 5x 19,383 / 32 and 54 s. A scale-independent tolerance (share of the diagonal) is a candidate fix, not done yet.
+- **Scale check:** 0.5x and 2x give exactly the same mesh as 1x (19,104 faces); 0.01x (19,441 faces, 103 s) and 5x (19,383) do not. The tolerances are relative to the model, so the cause is rounding amplified by the layout, not an absolute weld distance (the first guess here, which was wrong). It explains why Greg's machine gave 19,505 faces.
+- Kept: `_merge_seam_triangle_pairs` (two mirror triangles sharing a seam edge become one convex quad): dragon 20K sym X 34 to 16 triangles. The rest are mirror pairs that only touch the plane at a vertex.
 - Triangles cluster on the symmetry plane (x about 0) and at the neck end (z about -60); without symmetry only 8 triangles.
 - Kept: `_split_non_manifold` as a final safety net.
 

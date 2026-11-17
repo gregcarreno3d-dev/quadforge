@@ -126,7 +126,7 @@ Screenshots in `docs/images/soft-surface`. Counts come from the panel's Last Res
 | Dragon head | 20K | 19,505 | 99.7 % (58 triangles, 2 n-gons) | 843 | 23.8 s |
 
 - The dragon at 20K with symmetry X reported "The result contains non-manifold edges". It could not be reproduced on the development machine (19,104 faces, 34 triangles, no non-manifold edges, same for 1, 2 and 4 threads). 0.16.9 adds a final repair of edges shared by three or more faces as a safety net; it is untested against the original case.
-- The result depends on the model's scale (the same dragon scaled 0.01x, 1x and 5x gives 19,441, 19,104 and 19,383 faces, and 103 s, 55 s and 54 s). Tolerances in the finishing steps are probably absolute; making them relative to the model is planned.
+- Scaling the model by a power of two (0.5x, 2x) gives exactly the same mesh (19,104 faces); scaling by 0.01x or 5x gives a different one (19,441 and 19,383 faces; 0.01x also took 103 s, about twice as long). So the tolerances are relative to the model, as intended, and the difference is floating-point rounding that the layout decisions amplify. Two machines can therefore give slightly different meshes for the same sculpt.
 - Triangles concentrate on the symmetry plane and at open necks.
 
 ## Known issues
