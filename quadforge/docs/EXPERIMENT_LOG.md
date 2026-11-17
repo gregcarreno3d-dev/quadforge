@@ -50,6 +50,12 @@ that breaks another part, stays out of the code and is listed here.
 
 Baseline (engine curvature, 10K, no symmetry): head back 0.69 %, Hada 0.42 %, hand 0.08 %, helmet 2.3 %, dragon 3.7 % (feat 8.0 %).
 
+## Found on the dragon head with the 0.16.9 tests (sym X, 20K)
+- Greg's run: 19,505 faces, 58 triangles, 2 n-gons, non-manifold warning. Here (same settings, 1/2/4 threads): 19,104 faces, 34 triangles, 6 n-gons, no non-manifold. Same result for every thread count, so the difference is the source or the scale.
+- **The result depends on the model's scale** (weld distances and tolerances are absolute): dragon at 0.01x gives 19,441 faces / 40 triangles and takes 103 s; at 1x 19,104 / 34 and 55 s; at 5x 19,383 / 32 and 54 s. A scale-independent tolerance (share of the diagonal) is a candidate fix, not done yet.
+- Triangles cluster on the symmetry plane (x about 0) and at the neck end (z about -60); without symmetry only 8 triangles.
+- Kept: `_split_non_manifold` as a final safety net.
+
 ## Ideas not started (Soft Surface / Organic)
 
 Soft version of the Hard Surface detection: continuous measures that weight the size and direction fields instead of hard edges.

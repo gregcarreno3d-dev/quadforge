@@ -904,6 +904,35 @@ def _tidy_seam(bm, plan: sym.SymmetryPlan, settings) -> None:
         trial.free()
     if better:
         _run(bm)
+    _split_non_manifold(bm)
+
+
+def _split_non_manifold(bm) -> int:
+    """An edge shared by three or more faces (a weld or a sewn slit pinched two sheets together): keeps the two biggest
+    faces on it, drops the others and closes the small hole that leaves. Applied only when it lowers the number of open
+    plus non-manifold edges. Returns how many faces were dropped."""
+    extra = []
+    for edge in bm.edges:
+        if len(edge.link_faces) > 2:
+            extra.extend(sorted(edge.link_faces, key=lambda face: face.calc_area())[:len(edge.link_faces) - 2])
+    extra = list(dict.fromkeys(face for face in extra if face.is_valid))
+    if not extra:
+        return 0
+    trial = bm.copy()
+    try:
+        trial.faces.ensure_lookup_table()
+        keep = {tuple(sorted(vert.index for vert in face.verts)) for face in extra}
+        doomed = [face for face in trial.faces if tuple(sorted(vert.index for vert in face.verts)) in keep]
+        bmesh.ops.delete(trial, geom=doomed, context="FACES")
+        _fill_small_loops(trial, [edge for edge in trial.edges if edge.is_boundary], max_sides=4)
+        better = _surface_defects(trial) < _surface_defects(bm)
+    finally:
+        trial.free()
+    if not better:
+        return 0
+    bmesh.ops.delete(bm, geom=extra, context="FACES")
+    _fill_small_loops(bm, [edge for edge in bm.edges if edge.is_boundary], max_sides=4)
+    return len(extra)
 
 
 FLAT_FACE_AREA = 1e-4   # a face under this share of the average face area is a folded strip, not a real quad
