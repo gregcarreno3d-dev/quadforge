@@ -83,7 +83,7 @@ Reading: FORGE triangles are close to equilateral and follow the surface about t
 Open borders: the engine closes every border loop with a cap, treats the loop as a hard-edge line, runs the integer-grid method and removes the quads on the cap. Loops shorter than about 6 quad edges are left closed (the hole disappears). The border may get a few triangles where very short edges were welded.
 
 ## Not tested
-- Windows and macOS on real machines. Blender 4.2.0, 4.5.15 LTS, 5.1.2 and 5.2 were tested on Linux through the `bpy` module (integration, zones, guides, UV, surface, hard-edge suites and the 67-case matrix all pass); the Blender GUI itself was only used on 5.2 and 5.3 (0.16.9 sculpt tests).
+- Windows and macOS on real machines. Blender 4.2.0, 4.5.15 LTS, 5.1.2 and 5.2 were tested on Linux through the `bpy` module (integration, zones, guides, UV, surface, hard-edge suites and the 67-case matrix all pass); the Blender GUI itself was only used on 5.2 and 5.3 (0.16.9 and 0.17.0 tests).
 - Test note: the `bpy` module can crash or hang at interpreter shutdown on 4.2 and 4.5 (a Blender issue, not the add-on's), so tests run through `quadforge/tests/run_in_bpy.py`, which exits with `os._exit`.
 
 ## Limitations
@@ -123,7 +123,7 @@ Measured on the Ver-03 test part (a disc with four holes, a revolution wall and 
 Hand at 5K without symmetry: 100 % quads, 11 poles per 1000, 0.58 %, 5 s. The helmet and the dragon are limited by resolution at 10K (feathers, rivets, scales, teeth need more quads). Results depend slightly on the machine (floating-point rounding is amplified by the layout).
 
 ## Soft Surface / Organic: first user tests of 0.16.9 (Blender 5.3, symmetry X)
-Screenshots in `docs/images/soft-surface`. Counts come from the panel's Last Result.
+Counts come from the panel's Last Result. (The 0.16.9 screenshots were replaced by the 0.17.0 ones below.)
 
 | Model | Request | Faces | Quads | Poles | Time |
 |---|---|---|---|---|---|
@@ -137,6 +137,29 @@ Screenshots in `docs/images/soft-surface`. Counts come from the panel's Last Res
 - The dragon at 20K with symmetry X reported "The result contains non-manifold edges". It could not be reproduced on the development machine (19,104 faces, 34 triangles, no non-manifold edges, same for 1, 2 and 4 threads). 0.16.9 adds a final repair of edges shared by three or more faces as a safety net; it is untested against the original case.
 - Scaling the model by a power of two (0.5x, 2x) gives exactly the same mesh (19,104 faces); scaling by 0.01x or 5x gives a different one (19,441 and 19,383 faces; 0.01x also took 103 s, about twice as long). So the tolerances are relative to the model, as intended, and the difference is floating-point rounding that the layout decisions amplify. Two machines can therefore give slightly different meshes for the same sculpt.
 - Triangles concentrate on the symmetry plane and at open necks.
+
+## First user tests of 0.17.0 (Blender 5.3, 120K requested unless noted)
+Screenshots in `docs/images/soft-surface` and `docs/images/hard-surface` (cropped to the viewport and the add-on panel). Counts come from the panel's Last Result.
+
+| Model | Mode | Faces (vs request) | Triangles | Poles | Time |
+|---|---|---|---|---|---|
+| Female head, symmetry X, Detail on Curves Medium | Soft | 118,490 (-1.3 %) | 8 | 501 | 29.1 s |
+| Bull ant, symmetry X, Medium | Soft | 115,548 (-3.7 %) | 0 | 136 | 18.1 s |
+| Helmet, symmetry X, Medium | Soft | 114,639 (-4.5 %) | 10 (+2 n-gons) | 906 | 90.2 s |
+| Dragon head (889K source), symmetry X, request 80K | Soft | 74,881 (-6.4 %) | not recorded | not recorded | not recorded |
+| Plate with ring and slot | Hard | 116,772 (-2.7 %) | 30 | 202 | 23.3 s |
+| Cylinder Ver-01 | Hard | 117,389 (-2.2 %) | not recorded | not recorded | not recorded |
+| Cylinder Ver-02, symmetry X | Hard | 120,504 (+0.4 %) | not recorded | not recorded | not recorded |
+| Cylinder Ver-03, symmetry X | Hard | 118,712 (-1.1 %) | not recorded | not recorded | not recorded |
+
+What the screenshots show:
+- **Analyze Form works as intended.** Orange (finer faces) lands on eyelids, ear rims, nostrils and lips of the head, on the joints and feet of the ant, on the rivets and edges of the helmet and on the teeth, horns and spines of the dragon; flat areas stay blue.
+- **Clean results:** head, ant, Cylinder Ver-02 and the flat areas of the plate are regular and almost all quads.
+- **Ver-03 still has torn patches around the four holes** (zigzag rows of thin quads on the rims; the rest of the part is clean). This was already open in 0.16.9 and 0.17.0 did not fix it. It is the next Hard Surface item.
+- **Ver-01 (free-form top)** shows three spiral-shaped pole groups on the top face, and in the side view a dark band of stretched quads on the sloping surface (it may be partly the grazing view angle; to be checked on the mesh).
+- **Plate:** small irregular patches near the chamfers around the holes; the local warning reported a group of 11 untidy faces near (21.07, 16.26, 0.14).
+- **Counts:** the helmet (-4.5 %) and the dragon (-6.4 %) fall short of the request; the dragon is just outside the 6 % tolerance of the organic battery. The helmet took 90 s at 120K (30 s in 0.16.9 at the same request); the likely cause is Detail on Curves (Medium), not yet measured.
+- The dragon's non-manifold warning at 20K was not retested in this round.
 
 ## Known issues
 - **Intermittent seam gap with symmetry.** Once, on GitHub's continuous-integration runner, the matrix scenario "block-holes,

@@ -5,15 +5,19 @@ It handles organic sculpts and, in preview, CAD / STL parts (3D printing, mechan
 
 ![CAD parts with QuadForge 0.16.3. Top: surface analysis (planes grey, cylinders green, spheres purple, revolution teal, chamfers orange, bevels blue). Bottom: the Hard Surface remesh of the same parts at about 4K quads, with surface analysis on](docs/images/cad_0.16.jpg)
 
-![Examples: an organic head at 20K quads, a hard-surface flange at 5K quads with creases kept, and the same flange without hard-edge detection](docs/images/examples.png)
+![Examples from an earlier version: an organic head at 20K quads, a hard-surface flange at 5K quads with creases kept, and the same flange without hard-edge detection](docs/images/examples.png)
 
-![Soft Surface / Organic, version 0.16.9: a female head at 20K quads (100 % quads, 52 poles, 9.5 s) and a viking-style helmet at 20K quads (100 % quads, 193 poles, 13 s), symmetry X](docs/images/soft-surface/head-20k-front.jpg)
+![Soft Surface / Organic, version 0.17.0 (Blender 5.3, symmetry X, 120K quads): a female head (118,490 faces, 100 % quads, 8 triangles, 501 poles, 29 s) and a bull-ant sculpt (115,548 quads, 0 triangles, 136 poles, 18 s)](docs/images/soft-surface/head-front.jpg)
 
-![Soft Surface / Organic, version 0.16.9: a dragon head sculpt (889K source triangles) remeshed to 120K quads with symmetry X (45 s, 16 triangles)](docs/images/soft-surface/dragon-120k-front.jpg)
+![Soft Surface / Organic, version 0.17.0: a viking-style helmet remeshed to 120K quads with symmetry X (114,639 faces, 10 triangles, 2 n-gons, 906 poles, 90 s)](docs/images/soft-surface/helmet-front.jpg)
 
-![Organic and hard-surface results (screenshots from version 0.11, Blender 5.2.3: head, fairy, ant, plate). The method for organic models has not changed since](docs/images/results_0.11.jpg)
+![Soft Surface / Organic, version 0.17.0: a dragon head sculpt (889K source triangles) remeshed to about 80K quads with symmetry X](docs/images/soft-surface/dragon-80k.jpg)
 
-Screenshots come from runs in Blender 5.2.3 on the author's machine; times depend on the computer.
+![Hard Surface, version 0.17.0: a CAD plate with a ring and slot remeshed to 120K quads (116,772 faces, 100 % quads, 30 triangles, 202 poles, 23 s, 1,619 hard edges kept)](docs/images/hard-surface/plate-120k-a.jpg)
+
+![Analyze Form (new in 0.17.0) on the head: orange is where Detail on Curves will place smaller faces (eyelids, ears, nostrils, lips), blue where the faces stay normal](docs/images/soft-surface/head-analyze-form.jpg)
+
+Screenshots of 0.17.0 come from runs in Blender 5.3.0 on the author's machine (the CAD parts image above is from 0.16.3, the examples image from an earlier version); times depend on the computer.
 
 - Quads or triangles, from 2K to 500K faces, with a one-click **Hard Surface** (flat shading, CAD surface analysis) / **Soft Surface (Organic)** (smooth shading) setup
 - Reads heavy sculpts directly, keeps hard edges, symmetry, UV maps, Face Sets and materials
@@ -109,7 +113,7 @@ still produces fewer irregular vertices at 80,000 faces and above. Triangle outp
 closely as Decimate, with near-equilateral triangles. The full tables, the metric definitions and a reproducible check
 on meshes you can regenerate are in the [technical report](docs/TECHNICAL_REPORT.md#7-evaluation).
 
-More 0.16.9 sculpt results (female head, helmet, dragon head at 20K and 120K quads) are in [`docs/images/soft-surface`](docs/images/soft-surface).
+More 0.17.0 results are in [`docs/images/soft-surface`](docs/images/soft-surface) (head, helmet, dragon, bull ant, with Analyze Form views) and [`docs/images/hard-surface`](docs/images/hard-surface) (plate and three cylinder parts at 120K quads, including the cases that still show flaws; see [status and limits](quadforge/docs/STATUS_AND_LIMITS.md)).
 
 ## Status
 
