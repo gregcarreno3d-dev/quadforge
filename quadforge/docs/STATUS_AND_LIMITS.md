@@ -8,7 +8,7 @@ See `EXPERIMENT_LOG.md` for the short list of what was tried, kept and rejected.
 - **Speed on CAD parts:** a plate with a strong size variation falls back after the second attempt (about 12 s instead of 26 s at 4K quads).
 
 ## Tested
-- 0.17.0 Blender suite (hard, integration, surfaces, bevel, forge, zone_detail, zones, guides, head, preview, subdiv, uv, vgzones, surface): all pass; the matrix gives 66 of 67 (gear-like with 30 hard edges: 97 % quads, same as 0.16.7).
+- 0.18.0 Blender suite (hard, integration, surfaces, bevel, forge, form_detail, zone_detail, zones, guides, head, preview, subdiv, uv, vgzones, surface, ui): all pass; the matrix (quick set) gives 23 of 23. The 0.18.0 change is interface only, so the remesh results are the 0.17.0 ones (the full matrix gave 66 of 67 in 0.17.0: gear-like with 30 hard edges, 97 % quads).
 - FORGE engine (Linux): sphere, torus, box with 12 exact hard edges, hemisphere with border, cylinder, density (length ratio 2.99 vs 3 requested), meshes with defects, 120 random cases with no failures, 1.3 M tris → 40 K in ~7 s (peak ~390 MB).
 - Python backend with the real engine through a simulated mesh.
 - Windows and macOS binaries are built natively by CI and pass the engine tests there; real-machine use is still limited.
