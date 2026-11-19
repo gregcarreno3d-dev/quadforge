@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.18.0
-- **Interface organised by surface type.** The sections after the Remesh button now depend on the surface button: Hard Surface shows Hard Edges and Surface Analysis, Soft Surface / Organic shows the new Detail on Curves section (moved out of Density, with Analyze Form). Symmetry, Flow Guides, Density, Isolate Zones, Extra Levels, How to Use and Advanced are always there. With custom settings (no surface button marked) every section is shown, and Advanced > Show Options for Both Surface Types shows them whatever is marked. Hidden sections keep their values.
+- **Interface organised by surface type.** The sections after the Remesh button now depend on the surface button: Hard Surface shows Hard Edges and Surface Analysis, Soft Surface / Organic shows the new Detail on Curves section (moved out of Density, with Analyze Form). Symmetry, Flow Guides, Density, Isolate Zones, Extra Levels, How to Use and Advanced are always there. With custom settings (no surface button marked) every section is shown, and Advanced > Show All Options shows them whatever is marked. Hidden sections keep their values.
 - **Last Result moved directly under the Remesh button** (it was after all the optional sections).
 - **Help texts are hidden until Show Help is pressed** (new button under Quick Preview), so the sections are much shorter and need less scrolling. Tooltips are unchanged.
 - **New order:** Hard Edges, Surface Analysis, Detail on Curves, Symmetry, Flow Guides, Density, Isolate Zones, Extra Levels (shape and detail settings first, rarer ones last).

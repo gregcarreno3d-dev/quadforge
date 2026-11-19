@@ -9,7 +9,7 @@ machines and your own models. That is what this guide is for. Plan about 30 minu
 1. Download the zip for your system from the release (`windows-x64`, `macos-arm64` for Apple Silicon, `macos-x64` for
    Intel, `linux-x64`).
 2. Blender: `Edit > Preferences > Get Extensions > ▾ > Install from Disk…`, pick the zip, enable it.
-3. 3D Viewport, press **N**, tab **QuadForge**. The sections below the Remesh button change with the surface button (Hard Surface or Soft Surface / Organic); press **Show Help** to read the explanations. If a section you expect is missing, check *Advanced > Show Options for Both Surface Types* and tell me which one.
+3. 3D Viewport, press **N**, tab **QuadForge**. The sections below the Remesh button change with the surface button (Hard Surface or Soft Surface / Organic); press **Show Help** to read the explanations. If a section you expect is missing, check *Advanced > Show All Options* and tell me which one.
 
 If the engine does not start, the panel shows a message that says why; please copy it into your report.
 

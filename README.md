@@ -17,6 +17,8 @@ It handles organic sculpts and, in preview, CAD / STL parts (3D printing, mechan
 
 ![Analyze Form (new in 0.17.0) on the head: orange is where Detail on Curves will place smaller faces (eyelids, ears, nostrils, lips), blue where the faces stay normal](docs/images/soft-surface/head-analyze-form.jpg)
 
+![The 0.18.0 panel in Soft Surface mode: Last Result sits under the Remesh button, Detail on Curves has its own section, and the help texts are hidden until Show Help is pressed (dragon head, 114,639 quads from a 120K request, symmetry X)](docs/images/soft-surface/ui-0.18-soft-edit-mode.jpg)
+
 Screenshots of 0.17.0 come from runs in Blender 5.3.0 on the author's machine (the CAD parts image above is from 0.16.3, the examples image from an earlier version); times depend on the computer.
 
 - Quads or triangles, from 2K to 500K faces, with a one-click **Hard Surface** (flat shading, CAD surface analysis) / **Soft Surface (Organic)** (smooth shading) setup

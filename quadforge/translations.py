@@ -207,7 +207,7 @@ SPANISH_INTERFACE = {
     "Clean Mesh First": "Limpiar la malla antes",
     "Hide Original": "Ocultar original",
     "Show Help": "Mostrar ayuda",
-    "Show Options for Both Surface Types": "Mostrar opciones de ambos tipos de superficie",
+    "Show All Options": "Mostrar todas las opciones",
     "Detail on Curves": "Detalle en curvas",
     # property tooltips
     "Approximate number of faces (quads or triangles) you want in the result. The final count can differ by a few percent":

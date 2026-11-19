@@ -13,7 +13,7 @@ The panel changes with the surface button you press, so you only see the setting
 - **Hard Surface** adds **Hard Edges** (corners and creases to keep) and **Surface Analysis (preview)**.
 - **Soft Surface / Organic** adds **Detail on Curves** (Low / Medium / High, and *Analyze Form*).
 - **Both:** Symmetry, Flow Guides, Density (vertex group, Detail by Zone), Isolate Zones, Extra Levels, How to Use and Advanced.
-- **Custom settings:** if you change by hand a value the surface button sets, the button is unmarked and every section is shown. *Advanced > Show Options for Both Surface Types* also shows all of them.
+- **Custom settings:** if you change by hand a value the surface button sets, the button is unmarked and every section is shown. *Advanced > Show All Options* also shows all of them.
 - **Help texts** are hidden by default to keep the sections short. Press **Show Help** to read them. Hovering over any control still shows its tooltip.
 - Hidden sections keep their values; pressing a surface button writes its values again, as before.
 

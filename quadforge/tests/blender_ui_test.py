@@ -1,5 +1,5 @@
 """Sidebar sections follow the surface type: Hard Surface shows Hard Edges and Surface Analysis, Soft Surface shows
-Detail on Curves, the shared ones are always there, and 'Show Options for Both Surface Types' shows everything.
+Detail on Curves, the shared ones are always there, and 'Show All Options' shows everything.
 Run: python run_in_bpy.py blender_ui_test.py (bpy module)."""
 import sys
 from pathlib import Path

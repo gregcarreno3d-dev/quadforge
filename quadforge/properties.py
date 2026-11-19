@@ -319,7 +319,7 @@ class QuadForgeProperties(bpy.types.PropertyGroup):
         default=False,
     )
     show_all_options: BoolProperty(
-        name="Show Options for Both Surface Types",
+        name="Show All Options",
         description="Show the Hard Surface sections (Hard Edges, Surface Analysis) and the Soft Surface section "
                     "(Detail on Curves) whichever surface button is marked",
         default=False,

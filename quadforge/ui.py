@@ -12,7 +12,7 @@ Layout, from top to bottom (the sections after the Remesh button depend on the s
       Isolate Zones ........ both
       Extra Levels ......... both
       How to Use ........... collapsed
-      Advanced ............. collapsed, includes "Show Options for Both Surface Types"
+      Advanced ............. collapsed, includes "Show All Options"
 
 Help texts are hidden until "Show Help" is switched on, so the sections stay short. A surface button only changes
 which sections are shown; the values it sets are written when the button is pressed (see presets.SURFACE_PROFILES).
