@@ -225,6 +225,20 @@ The parts now live in `tools/corpus_real/`.
 | Ver-01 | 30K / 120K | X | PASS, flaws 1.02 % / 0.68 % (194 s at 120K) |
 | Ver-02, Ver-05 | 30K | X | FAIL by design: the parts are not X-symmetric (deviation 1.6 % / 9.6 %) |
 
-Open: the torn rows on Ver-03 and the corner clusters on Ver-01 seen in the
-author's Blender screenshots do not reproduce with the battery defaults, so the
-difference is in the add-on settings or the Blender-side steps, not in the engine.
+Correction: the "Ver-03" in those screenshots is the **Cylinder Ver-03** (the disc with four holes), not
+`Test_Object_Ver-03` (the slim part). The table above is about the slim part.
+
+### Cylinder Ver-03 hole rims, reproduced (0.18.0, 120K, Hard Surface, symmetry X)
+
+The ragged rows along the hole rims reproduce outside Blender. Two things were hiding them:
+
+* `tools/cad_battery.py` set the angle on a field that does not exist (`sharp_angle_degrees`), so every battery run
+  used 35 degrees instead of the profile's 30. Fixed (`sharp_angle_deg`).
+* The verdict only counts triangles and squeezed corners. The rim problem is made of **stretched quads** (longest edge
+  more than 5 times the shortest) piled up along a chamfer or step narrower than one quad, and those pass the
+  corner test. The battery now prints a `stretched` count (information only for now, not part of the verdict).
+
+Measured on the 4-hole disc at 120K, symmetry X: STL input 120,184 quads + 124 triangles, 449 stretched; the part as
+Blender holds it (FBX, quad mesh) 115,192 quads, 0 triangles, 1,024 stretched. Both show the same jagged rim in a top
+view, so this is an engine layout problem on thin rim steps, not a Blender-side setting. Next: resample the rim loops
+of holes evenly and keep the rows along them.
