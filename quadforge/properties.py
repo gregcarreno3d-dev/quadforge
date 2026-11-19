@@ -313,6 +313,17 @@ class QuadForgeProperties(bpy.types.PropertyGroup):
         default=1, min=1, max=5,
         update=_unmark_surface,
     )
+    show_help: BoolProperty(
+        name="Show Help",
+        description="Show the explanation text inside each section (the sections are shorter with it off)",
+        default=False,
+    )
+    show_all_options: BoolProperty(
+        name="Show Options for Both Surface Types",
+        description="Show the Hard Surface sections (Hard Edges, Surface Analysis) and the Soft Surface section "
+                    "(Detail on Curves) whichever surface button is marked",
+        default=False,
+    )
     hide_original: BoolProperty(
         name="Hide Original",
         description="Hide the original object after remeshing (it is never deleted)",

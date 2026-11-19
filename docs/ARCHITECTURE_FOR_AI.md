@@ -1,6 +1,6 @@
 # QuadForge: architecture and behaviour, written for AI assistants
 
-Version described: **0.17.0** (FORGE engine in Rust since 0.15.0; chamfer/bevel detector since 0.15.1; whole-model surface analysis since 0.16.0). Licence: GPL-3.0-or-later. Everything here was checked against the code in this
+Version described: **0.18.0** (FORGE engine in Rust since 0.15.0; chamfer/bevel detector since 0.15.1; whole-model surface analysis since 0.16.0). Licence: GPL-3.0-or-later. Everything here was checked against the code in this
 repository. If this file and the code disagree, **the code wins**; please fix this file.
 
 This document is meant to be loaded whole into a model's context. It is dense and flat on purpose: sections are
@@ -26,8 +26,11 @@ quadforge/                    the add-on (this folder is what Blender installs)
   __init__.py                 registration, version
   blender_manifest.toml       Blender extension manifest (id "quadforge", per-platform zips)
   properties.py               QuadForgeProperties: every user setting (bpy PropertyGroup)
-  ui.py                       panels: QUADFORGE_PT_main, _hard_edges, _guides, _zones, _symmetry, _levels, _density,
-                              _speed, _last_result, _how_to_use, _advanced
+  ui.py                       panels (sub-panels of QUADFORGE_PT_main, in this order): _last_result, _hard_edges and _bands
+                              (Hard Surface), _form (Soft Surface), _symmetry, _guides, _density, _zones, _levels, _how_to_use,
+                              _advanced. `_shows(context, kind)` hides the other surface type's sections unless the surface
+                              button is unmarked (custom) or `show_all_options` is on; `_help()` draws help text only when
+                              `show_help` is on (both are scene properties)
   operators.py                quadforge.remesh, quadforge.remesh_modal (Esc cancels), quadforge.preview (about 3,000 faces, tagged
                               `quadforge_preview_of`, removed by the next full remesh), refresh_zones, mark_guides, clear_guides,
                               apply_preset, set_surface, set_target, reset_settings

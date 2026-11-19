@@ -1,16 +1,22 @@
 """The sidebar panel (View3D > N key > QuadForge).
 
-Layout, from top to bottom:
-    QuadForge .............. live advice, presets, target, the Remesh button
-      Hard Edges ........... optional, collapsed
-      Isolate Zones ........ optional, collapsed
-      Symmetry ............. optional, collapsed
-      Extra Levels ......... optional, collapsed (build 15K, 10K, 5K ... in one go)
-      Last Result .......... appears after the first run
-      How to Use ........... step-by-step guide, collapsed
-      Advanced ............. collapsed
+Layout, from top to bottom (the sections after the Remesh button depend on the surface type):
+    QuadForge .............. advice, Hard / Soft Surface, Target Faces, Output, Remesh, Quick Preview, help toggle
+      Last Result .......... directly under the Remesh button (appears after the first run)
+      Hard Edges ........... Hard Surface only: corners and creases to keep
+      Surface Analysis ..... Hard Surface only (preview)
+      Detail on Curves ..... Soft Surface only: finer faces where the form bends, Analyze Form
+      Symmetry ............. both
+      Flow Guides .......... both
+      Density .............. both: vertex group and detail by zone
+      Isolate Zones ........ both
+      Extra Levels ......... both
+      How to Use ........... collapsed
+      Advanced ............. collapsed, includes "Show Options for Both Surface Types"
 
-A beginner only needs the first panel: pick a preset, press the button.
+Help texts are hidden until "Show Help" is switched on, so the sections stay short. A surface button only changes
+which sections are shown; the values it sets are written when the button is pressed (see presets.SURFACE_PROFILES).
+When no button is marked (custom settings) every section is shown.
 """
 import math
 import re
@@ -52,6 +58,18 @@ def draw_wrapped_text(layout, context, text: str, *, icon: str = "NONE", alert: 
             column.label(text=line, translate=False)
         else:
             column.label(text=line, icon=icon if index == 0 else "BLANK1", translate=False)
+
+
+def _help(layout, context, text: str, **kwargs) -> None:
+    """A help paragraph, drawn only when 'Show Help' is on (keeps the sections short)."""
+    if context.scene.quadforge.show_help:
+        draw_wrapped_text(layout, context, text, **kwargs)
+
+
+def _shows(context, kind: str) -> bool:
+    """Whether the sections that belong to one surface type are shown ('HARD' or 'ORGANIC')."""
+    settings = context.scene.quadforge
+    return settings.show_all_options or settings.surface_type in (kind, "NONE")
 
 
 def say(template: str, **values) -> str:
@@ -182,7 +200,8 @@ class QUADFORGE_PT_main(_QuadForgePanel, bpy.types.Panel):
 
         layout.separator()
         draw_wrapped_text(layout, context, _describe_active_options(settings), icon="PREFERENCES")
-        draw_wrapped_text(layout, context, translate(texts.HINT_OPTIONAL_PANELS))
+        layout.prop(settings, "show_help", toggle=True, icon="QUESTION")
+        _help(layout, context, translate(texts.HINT_OPTIONAL_PANELS))
 
     @staticmethod
     def _draw_advice(layout, context, messages) -> None:
@@ -195,16 +214,37 @@ class QUADFORGE_PT_main(_QuadForgePanel, bpy.types.Panel):
 
 # --------------------------------------------------------------------------- optional sections
 
-class QUADFORGE_PT_bands(_QuadForgePanel, bpy.types.Panel):
-    bl_label = "Surface Analysis (preview)"
+class QUADFORGE_PT_form(_QuadForgePanel, bpy.types.Panel):
+    bl_label = "Detail on Curves"
     bl_parent_id = "QUADFORGE_PT_main"
-    bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context):
+        return _shows(context, "ORGANIC")
 
     def draw(self, context):
         layout = self.layout
         _prepare_layout(layout)
         settings = context.scene.quadforge
-        draw_wrapped_text(layout, context, "For CAD-style meshes (STL). Splits the whole model into surfaces (planes, cylinders, spheres, cones, "
+        _help(layout, context, translate(texts.HELP_CURVATURE))
+        layout.prop(settings, "curvature_detail")
+        layout.operator("quadforge.analyze_form", icon="COLOR")
+
+
+class QUADFORGE_PT_bands(_QuadForgePanel, bpy.types.Panel):
+    bl_label = "Surface Analysis (preview)"
+    bl_parent_id = "QUADFORGE_PT_main"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context):
+        return _shows(context, "HARD")
+
+    def draw(self, context):
+        layout = self.layout
+        _prepare_layout(layout)
+        settings = context.scene.quadforge
+        _help(layout, context, "For CAD-style meshes (STL). Splits the whole model into surfaces (planes, cylinders, spheres, cones, "
                                            "revolution, free-form) and finds its chamfers (orange) and bevels (blue). Sizes are read in millimetres.")
         layout.operator("quadforge.analyze_surfaces", icon="MESH_DATA")
         layout.prop(settings, "surface_view", expand=True)
@@ -217,7 +257,7 @@ class QUADFORGE_PT_bands(_QuadForgePanel, bpy.types.Panel):
         for key, label in (("ALL", "All Borders"), ("SHARP", "Sharp"), ("TANGENT", "Tangent"), ("BAND", "Bevel Sides")):
             row.operator("quadforge.select_borders", text=label).kind = key
         layout.operator("quadforge.detect_bands", text="Chamfers and Bevels Only", icon="MOD_BEVEL")
-        draw_wrapped_text(layout, context, "Tables: Text Editor > 'QuadForge Surfaces' and 'QuadForge Bands'. In Hard Surface the remesh can use this "
+        _help(layout, context, "Tables: Text Editor > 'QuadForge Surfaces' and 'QuadForge Bands'. In Hard Surface the remesh can use this "
                                            "analysis: see Hard Edges > Use Surface Analysis.")
 
 
@@ -225,6 +265,10 @@ class QUADFORGE_PT_hard_edges(_QuadForgePanel, bpy.types.Panel):
     bl_label = "Hard Edges"
     bl_parent_id = "QUADFORGE_PT_main"
     bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context):
+        return _shows(context, "HARD")
 
     def draw_header(self, context):
         self.layout.prop(context.scene.quadforge, "use_sharp_angle", text="")
@@ -234,7 +278,7 @@ class QUADFORGE_PT_hard_edges(_QuadForgePanel, bpy.types.Panel):
         _prepare_layout(layout)
         settings = context.scene.quadforge
 
-        draw_wrapped_text(layout, context, translate(texts.HELP_HARD_EDGES))
+        _help(layout, context, translate(texts.HELP_HARD_EDGES))
         layout.separator()
         detection = layout.column()
         detection.active = settings.use_sharp_angle
@@ -244,7 +288,7 @@ class QUADFORGE_PT_hard_edges(_QuadForgePanel, bpy.types.Panel):
         smart.active = settings.smart_features
         smart.prop(settings, "min_feature_size")
         smart.prop(settings, "keep_right_angles")
-        draw_wrapped_text(detection, context, translate(texts.HELP_SMART_FEATURES))
+        _help(detection, context, translate(texts.HELP_SMART_FEATURES))
         detection.prop(settings, "soft_bevels")
         layout.separator()
         layout.prop(settings, "use_surface_analysis")
@@ -272,7 +316,7 @@ class QUADFORGE_PT_guides(_QuadForgePanel, bpy.types.Panel):
         layout = self.layout
         _prepare_layout(layout)
         settings = context.scene.quadforge
-        draw_wrapped_text(layout, context, translate(texts.HELP_GUIDES))
+        _help(layout, context, translate(texts.HELP_GUIDES))
         layout.separator()
         count = operators.guide_edge_count(context.active_object)
         text = say(texts.LABEL_GUIDE_COUNT, count=count) if count else translate(texts.LABEL_GUIDE_NONE)
@@ -296,7 +340,7 @@ class QUADFORGE_PT_zones(_QuadForgePanel, bpy.types.Panel):
         _prepare_layout(layout)
         settings = context.scene.quadforge
 
-        draw_wrapped_text(layout, context, translate(texts.HELP_ZONES))
+        _help(layout, context, translate(texts.HELP_ZONES))
         layout.separator()
         layout.prop(settings, "use_materials")
         layout.prop(settings, "use_face_sets")
@@ -320,7 +364,7 @@ class QUADFORGE_PT_symmetry(_QuadForgePanel, bpy.types.Panel):
         _prepare_layout(layout)
         settings = context.scene.quadforge
 
-        draw_wrapped_text(layout, context, translate(texts.HELP_SYMMETRY))
+        _help(layout, context, translate(texts.HELP_SYMMETRY))
         layout.separator()
         axes_row = layout.row(align=True, heading="Axes")
         axes_row.prop(settings, "sym_x", toggle=True)
@@ -330,10 +374,10 @@ class QUADFORGE_PT_symmetry(_QuadForgePanel, bpy.types.Panel):
         options = layout.column()
         options.active = settings.sym_x or settings.sym_y or settings.sym_z
         options.prop(settings, "sym_center")
-        draw_wrapped_text(options, context, translate(texts.HELP_SYMMETRY_PLANE))
+        _help(options, context, translate(texts.HELP_SYMMETRY_PLANE))
         options.separator()
         options.prop(settings, "sym_side")
-        draw_wrapped_text(options, context, translate(texts.HELP_SYMMETRY_SIDE))
+        _help(options, context, translate(texts.HELP_SYMMETRY_SIDE))
         options.separator()
         options.prop(settings, "sym_tolerance")
         options.prop(settings, "check_symmetry")
@@ -349,7 +393,7 @@ class QUADFORGE_PT_levels(_QuadForgePanel, bpy.types.Panel):
         _prepare_layout(layout)
         settings = context.scene.quadforge
 
-        draw_wrapped_text(layout, context, translate(texts.HELP_LEVELS))
+        _help(layout, context, translate(texts.HELP_LEVELS))
         layout.separator()
         layout.prop(settings, "extra_levels")
         layout.operator("quadforge.apply_preset", text=PRESETS["LOD_LADDER"].label).preset = "LOD_LADDER"
@@ -373,9 +417,9 @@ class QUADFORGE_PT_density(_QuadForgePanel, bpy.types.Panel):
         settings = context.scene.quadforge
         active = context.active_object
 
-        draw_wrapped_text(layout, context, translate(texts.HELP_ENGINE_FORGE))
+        _help(layout, context, translate(texts.HELP_ENGINE_FORGE))
         layout.separator()
-        draw_wrapped_text(layout, context, translate(texts.HELP_DENSITY))
+        _help(layout, context, translate(texts.HELP_DENSITY))
         if active is not None and active.type == "MESH":
             if len(active.vertex_groups):
                 layout.prop_search(settings, "density_group", active, "vertex_groups")
@@ -387,14 +431,10 @@ class QUADFORGE_PT_density(_QuadForgePanel, bpy.types.Panel):
         layout.separator()
         box = layout.box()
         box.label(text="Detail by Zone")
-        draw_wrapped_text(box, context, translate(texts.HELP_ZONE_DETAIL))
+        _help(box, context, translate(texts.HELP_ZONE_DETAIL))
         box.operator("quadforge.refresh_zones", icon="FILE_REFRESH")
         for item in settings.zone_factors:
             box.prop(item, "factor", text=item.name)
-        layout.separator()
-        draw_wrapped_text(layout, context, translate(texts.HELP_CURVATURE))
-        layout.prop(settings, "curvature_detail")
-        layout.operator("quadforge.analyze_form", icon="COLOR")
 
 
 # --------------------------------------------------------------------------- result and help
@@ -437,7 +477,7 @@ class QUADFORGE_PT_last_result(_QuadForgePanel, bpy.types.Panel):
         self._draw_levels(layout, context, settings)
         layout.separator()
         if not triangles_only:
-            draw_wrapped_text(layout, context, translate(texts.HELP_RESULT), icon="INFO")
+            _help(layout, context, translate(texts.HELP_RESULT), icon="INFO")
         for warning in filter(None, settings.last_warnings.split("\n")):
             draw_wrapped_text(layout, context, warning, icon="ERROR")
 
@@ -488,6 +528,8 @@ class QUADFORGE_PT_advanced(_QuadForgePanel, bpy.types.Panel):
         layout = self.layout
         _prepare_layout(layout)
         settings = context.scene.quadforge
+        layout.prop(settings, "show_all_options")
+        layout.separator()
         layout.prop(settings, "quality_attempts")
         layout.prop(settings, "shading")
         layout.prop(settings, "clean_input")

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.18.0
+- **Interface organised by surface type.** The sections after the Remesh button now depend on the surface button: Hard Surface shows Hard Edges and Surface Analysis, Soft Surface / Organic shows the new Detail on Curves section (moved out of Density, with Analyze Form). Symmetry, Flow Guides, Density, Isolate Zones, Extra Levels, How to Use and Advanced are always there. With custom settings (no surface button marked) every section is shown, and Advanced > Show Options for Both Surface Types shows them whatever is marked. Hidden sections keep their values.
+- **Last Result moved directly under the Remesh button** (it was after all the optional sections).
+- **Help texts are hidden until Show Help is pressed** (new button under Quick Preview), so the sections are much shorter and need less scrolling. Tooltips are unchanged.
+- **New order:** Hard Edges, Surface Analysis, Detail on Curves, Symmetry, Flow Guides, Density, Isolate Zones, Extra Levels (shape and detail settings first, rarer ones last).
+- New settings `show_help` and `show_all_options` (restored by Reset Settings); Spanish translations for them; new test `quadforge/tests/blender_ui_test.py` (visibility of every section in both modes, order, reset, every section draws with help on and off).
+- No change to the remesh itself: the results are identical to 0.17.0.
+
 ## 0.17.0
 - **Fixed (Hard Surface): flipped faces after the cleanup.** Sewing the slit left by a removed folded strip could leave faces of one sheet reversed against their neighbours (flange at 25K: 53 flipped edges, while the engine output had none). The cleanup now makes every connected piece point the same way again, keeping the side it faced, and only when that lowers the number of flipped edges.
 - **Detail on Curves, smoother map:** the averaging patch is now about three quad lengths wide (was two) and the cap on smoothing steps is 450 (was 200, which made huge sculpts use a smaller patch than asked). Measured at 10K quads with symmetry X: Hada poles 27 to 16 per 1,000 faces and detail lost on curved areas 1.73 to 0.91 %, female head 0.90 to 0.74 %, hand at 5K 0.70 (Detail Off) to 0.58 %, dragon 2.46 to 2.31 % and 2.2x faster.

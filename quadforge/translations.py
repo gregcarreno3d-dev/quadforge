@@ -206,6 +206,9 @@ SPANISH_INTERFACE = {
     "Warn If Not Symmetric": "Avisar si no es simétrico",
     "Clean Mesh First": "Limpiar la malla antes",
     "Hide Original": "Ocultar original",
+    "Show Help": "Mostrar ayuda",
+    "Show Options for Both Surface Types": "Mostrar opciones de ambos tipos de superficie",
+    "Detail on Curves": "Detalle en curvas",
     # property tooltips
     "Approximate number of faces (quads or triangles) you want in the result. The final count can differ by a few percent":
         "Cantidad aproximada de caras (quads o triángulos) que quieres en el resultado. La cantidad final puede variar unos pocos por ciento",
@@ -275,6 +278,10 @@ SPANISH_INTERFACE = {
         "Revisa el modelo y avisa si no es realmente simétrico",
     "Merge duplicate vertices and remove loose geometry before remeshing":
         "Une vértices duplicados y elimina geometría suelta antes de remallar",
+    "Show the explanation text inside each section (the sections are shorter with it off)":
+        "Muestra el texto explicativo dentro de cada sección (con la ayuda apagada las secciones son más cortas)",
+    "Show the Hard Surface sections (Hard Edges, Surface Analysis) and the Soft Surface section (Detail on Curves) whichever surface button is marked":
+        "Muestra las secciones de Hard Surface (Hard Edges, Surface Analysis) y la de Soft Surface (Detail on Curves) sea cual sea el botón de superficie marcado",
     "Hide the original object after remeshing (it is never deleted)":
         "Oculta el objeto original tras remallar (nunca se borra)",
     "Copy the UV maps of the original onto the result. Faces next to an old UV seam are only approximate; bake from the original or unwrap again for final texturing":
