@@ -212,3 +212,19 @@ Ring-grid experiments in the engine (none kept): giving every closed marked loop
 Band-width size field (Unreleased): the add-on already had one (`_refine_thin_bands`), held at a floor of 0.6 of the normal size. Floor 0.35 as the default: 17 of 20 at 20K (fixes flange and bracket, breaks bolt, countersunk and ratchet); floor 0.45 was worse than both on the flange, so the effect is not monotonic. Kept as a second chance only when a result has more than 3 % flaws: 20 of 20 at 20K, 15 of 20 at 10K (flange, enclosure, countersunk, gear and heatsink still fail there, mostly because the grid has no room at that cell size). Heat sink at 10K (11.6 % flaws): 9 fins 1.2 mm thick with a 0.35 mm two-segment bevel on cells of about 0.9 mm leave a flat top of 0.5 mm, about half a cell; the engine gave 1195 flaws and the finer-strip rerun 1053 before cleanup, not enough to be kept. A part whose features are narrower than a cell needs more quads, not a better layout.
 
 Where the remaining flaws sit (flange 20K, heat sink 10K, measured on the finished mesh): they are not scattered. Flange: 1577 squeezed quads in 80 connected groups (largest 342, 96, 90 faces), 8 singletons; the shortest edge of a flawed quad is a median 0.06 of an average cell (about 0.04 mm), so these are strips squeezed almost flat, not slightly narrow quads. Heat sink: 1183 flaws in 81 groups, 256 triangles. Only 7 % (flange) / 17 % (heat sink) of the vertices around them are poles. Removing the squeezed strip as a quad loop does not work as a local cleanup: an edge ring is global, short inside the squeezed strip and normal length across the rest of the part, so only 2 rings of the flange (4 edges each) were short along their whole length, and both tore the surface open when collapsed. Collapsing only the short stretch of a ring leaves a triangle at each end. A local fix would have to move poles (singularities) as quad tools do, which is a change in the engine's field and extraction, not in the finishing step.
+
+
+## Symmetry X battery on the new Hard Surface test objects (0.18.0)
+
+The parts now live in `tools/corpus_real/`.
+
+| Part | Target | Symmetry | Result |
+|---|---|---|---|
+| Ver-03 | 30K / 120K | X | PASS, flaws 0.04 % / 0.01 % |
+| Ver-04 | 30K | X | PASS, flaws 0.48 % |
+| Ver-01 | 30K / 120K | X | PASS, flaws 1.02 % / 0.68 % (194 s at 120K) |
+| Ver-02, Ver-05 | 30K | X | FAIL by design: the parts are not X-symmetric (deviation 1.6 % / 9.6 %) |
+
+Open: the torn rows on Ver-03 and the corner clusters on Ver-01 seen in the
+author's Blender screenshots do not reproduce with the battery defaults, so the
+difference is in the add-on settings or the Blender-side steps, not in the engine.
