@@ -138,6 +138,19 @@ Counts come from the panel's Last Result. (The 0.16.9 screenshots were replaced 
 - Scaling the model by a power of two (0.5x, 2x) gives exactly the same mesh (19,104 faces); scaling by 0.01x or 5x gives a different one (19,441 and 19,383 faces; 0.01x also took 103 s, about twice as long). So the tolerances are relative to the model, as intended, and the difference is floating-point rounding that the layout decisions amplify. Two machines can therefore give slightly different meshes for the same sculpt.
 - Triangles concentrate on the symmetry plane and at open necks.
 
+## New Hard Surface test objects (five low-poly CAD parts, 0.18.0, no symmetry)
+Five parts supplied by the author (424 to 6,035 source faces, 22 to 178 mm, closed and manifold), run through `tools/cad_battery.py`. Flaws are triangles plus squeezed quads; deviation is the largest distance to the source as a share of the diagonal. The parts themselves are not in the repository.
+
+| Part | 10K | 20K | 30K | 120K |
+|---|---|---|---|---|
+| Ver-01 (large, free-form) | FAIL 4.75 % flaws | pass 1.32 % | pass 0.76 % | pass 0.50 % |
+| Ver-02 (tall cylinder) | pass 0.33 % | pass 0.16 % | pass 0.07 % | pass 0.03 % |
+| Ver-03 (slim part) | pass 0.39 % | pass 0.04 % | pass 0.00 % | pass 0.01 % |
+| Ver-04 (6K source faces) | pass 1.60 % | pass 0.46 % | pass 0.26 % | pass 0.26 % |
+| Ver-05 (flat plate) | pass 0.05 % | pass 0.02 % | pass 0.00 % | pass 0.00 % |
+
+19 of 20 pass; the only failure is Ver-01 at 10K (squeezed quads). Deviation from the source stays below 0.003 % everywhere and the face counts are within 3 % of the request. Times (Linux, several runs at once, so only indicative): Ver-01 154 s and Ver-04 246 s at 120K; the others 55 to 75 s.
+
 ## First user tests of 0.17.0 (Blender 5.3, 120K requested unless noted)
 Screenshots in `docs/images/soft-surface` and `docs/images/hard-surface` (cropped to the viewport and the add-on panel). Counts come from the panel's Last Result.
 
