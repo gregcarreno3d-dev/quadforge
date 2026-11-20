@@ -252,3 +252,22 @@ general fix: on the STL-input corpus at 30K (14 of 26 parts finished before the 
 helped the bracket (stretched 111 to 46) and the disc (541 to 350), but changed the face count by more than 6 % on
 Test_Object_Ver-04 and the enclosure. Not tested at 120K yet. `tools/cad_battery.py --no-soft-bevels` runs the
 comparison.
+
+### Rounded-bevel refinement on the 4-hole disc: what the sweep says
+
+Quad mesh as Blender holds it (FBX), symmetry X, 30 degrees. `soft_bevel_detail` is the edge-length multiplier on the facets of a rounded bevel (default 0.5).
+
+| Setting | 30K tris / squeezed / stretched | 120K tris / squeezed / stretched |
+|---|---|---|
+| 0.5 (default) | 166 / 220 / 184 | 0 / 1,066 / 1,024 |
+| 0.35 | 316 / 306 / 235 | not run |
+| 0.7 | 44 / 171 / 141 | not run |
+| 0.85 | 10 / 73 / 68 | not run |
+| 1.0 (no refinement) | 18 / 103 / 95 | 0 / 656 / 680 |
+
+So halving the faces on the rim fillet makes it worse; a lighter refinement is better at 30K and no refinement
+removes about a third of the stretched quads at 120K. It does **not** remove the problem: at 120K the top view
+still shows dense, slanted rows on the rims at fixed angles around each hole. The remaining cause is the layout, not the
+sizing: the grid is locked to the symmetry plane and the outer rim, and the engine cannot also run rows around the circular
+hole rim without leaving a defect there. The fix has to constrain the cross field (and the grid) along circular rim
+loops, in `engine-rs`; the default has not been changed yet because the sweep above is one part.
