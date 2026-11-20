@@ -1,13 +1,14 @@
-# Status and limits — QuadForge 0.18.0
+# Status and limits — QuadForge 0.18.1
 
 See `EXPERIMENT_LOG.md` for the short list of what was tried, kept and rejected.
 
-## Current status (0.18.0)
+## Current status (0.18.1)
 - **Surface analysis and chamfer/bevel detection (preview).** Tested on real CAD parts (a cylinder plate, a perforated plate, a flange, a spool-like part) and on synthetic parts (prisms, frustums, a tilted frustum, a UV sphere, a bracket with a tilted hole, a six-hole flange, a dome, a cone on a cylinder, an off-centre boss). Unit tests live in `engine-rs/src/stages/surfaces.rs`; the Blender test is `tests/blender_surfaces_test.py`.
 - **Known limits of the analysis:** surfaces of revolution are searched only about the X, Y and Z axes through the centre of the model; fillets made of very thin facets and coarse 3-facet fillets are only partly detected; with *Use Surface Analysis* about 2 % of the faces can stay triangles (isolated ones in the quad flow); the detector is in the Linux engine checked into the repository, and in Windows / macOS builds made by CI.
 - **Speed on CAD parts:** a plate with a strong size variation falls back after the second attempt (about 12 s instead of 26 s at 4K quads).
 
 ## Tested
+- 0.18.1: all Blender and Python suites pass (hard, integration, surfaces, bevel, forge, form_detail, zone_detail, zones, guides, head, preview, subdiv, uv, vgzones, surface, ui, ngon, row_fit; matrix quick set 23 of 23), engine tests 7 of 7, battery on the 20 synthetic parts at 30K (26 of 26 with the real parts) and on the eight polygon parts at 30K (8 of 8).
 - 0.18.0 Blender suite (hard, integration, surfaces, bevel, forge, form_detail, zone_detail, zones, guides, head, preview, subdiv, uv, vgzones, surface, ui): all pass; the matrix (quick set) gives 23 of 23. The 0.18.0 change is interface only, so the remesh results are the 0.17.0 ones (the full matrix gave 66 of 67 in 0.17.0: gear-like with 30 hard edges, 97 % quads).
 - FORGE engine (Linux): sphere, torus, box with 12 exact hard edges, hemisphere with border, cylinder, density (length ratio 2.99 vs 3 requested), meshes with defects, 120 random cases with no failures, 1.3 M tris → 40 K in ~7 s (peak ~390 MB).
 - Python backend with the real engine through a simulated mesh.
@@ -237,6 +238,13 @@ The parts now live in `tools/corpus_real/` (OBJ polygons).
 
 Correction: the "Ver-03" in those screenshots is the **Cylinder Ver-03** (the disc with four holes), not
 `Test_Object_Ver-03` (the slim part). The table above is about the slim part.
+
+### Cylinder Ver-03 hole rims: solved in 0.18.1 (the cause was the n-gon fan)
+
+The tables in this section were measured on triangulated input or before the fix. The cause turned out to be the
+engine's fan triangulation of concave n-gons (see the 0.18.1 changelog). With the fix, polygons as Blender holds them,
+120K, symmetry X: 118,367 faces, 0.13 % flaws, 108 stretched quads, deviation 0.016 %, 16 triangles. What is left is a
+short jagged stretch on one hole rim and a handful of triangles on the symmetry plane.
 
 ### Cylinder Ver-03 hole rims, reproduced (0.18.0, 120K, Hard Surface, symmetry X)
 

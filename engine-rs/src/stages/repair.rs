@@ -104,6 +104,51 @@ fn group_edges(edges: &[EdgeRec]) -> Vec<(usize, usize)> {
     groups
 }
 
+/// Ear-clipping triangulation of a simple polygon (five or more vertices, convex or concave) in 3D.
+/// A fan from the first vertex overlaps and flips triangles on a concave polygon (the rim around a hole of a CAD part).
+/// Falls back to the fan when no ear can be found (a degenerate or self-touching polygon), so it never loses faces.
+fn triangulate_ngon(p: &[Vec3], v: &[i32], out: &mut Vec<[i32; 3]>) {
+    let n = v.len();
+    // Newell normal of the whole polygon: the side that counts as "inside the turn"
+    let mut normal = Vec3::ZERO;
+    for i in 0..n {
+        let (a, b) = (p[v[i] as usize], p[v[(i + 1) % n] as usize]);
+        normal = normal + Vec3::new((a.y - b.y) * (a.z + b.z), (a.z - b.z) * (a.x + b.x), (a.x - b.x) * (a.y + b.y));
+    }
+    let fan = |out: &mut Vec<[i32; 3]>, ring: &[usize]| {
+        for i in 1..ring.len() - 1 { out.push([v[ring[0]], v[ring[i]], v[ring[i + 1]]]); }
+    };
+    let mut ring: Vec<usize> = (0..n).collect();
+    if normal.length2() < 1e-300 { fan(out, &ring); return; }
+    let pos = |k: usize| p[v[k] as usize];
+    let convex = |a: usize, b: usize, c: usize| (pos(b) - pos(a)).cross(pos(c) - pos(b)).dot(normal) > 0.0;
+    let inside = |a: usize, b: usize, c: usize, q: Vec3| {
+        let (pa, pb, pc) = (pos(a), pos(b), pos(c));
+        let (n1, n2, n3) = ((pb - pa).cross(q - pa).dot(normal), (pc - pb).cross(q - pb).dot(normal), (pa - pc).cross(q - pc).dot(normal));
+        n1 >= 0.0 && n2 >= 0.0 && n3 >= 0.0
+    };
+    while ring.len() > 3 {
+        let m = ring.len();
+        let mut cut = None;
+        for i in 0..m {
+            let (a, b, c) = (ring[(i + m - 1) % m], ring[i], ring[(i + 1) % m]);
+            if !convex(a, b, c) { continue; }
+            let blocked = ring.iter().any(|&k| k != a && k != b && k != c && inside(a, b, c, pos(k))
+                && pos(k) != pos(a) && pos(k) != pos(b) && pos(k) != pos(c));
+            if !blocked { cut = Some(i); break; }
+        }
+        match cut {
+            Some(i) => {
+                let (a, b, c) = (ring[(i + m - 1) % m], ring[i], ring[(i + 1) % m]);
+                out.push([v[a], v[b], v[c]]);
+                ring.remove(i);
+            }
+            None => { fan(out, &ring); return; }
+        }
+    }
+    out.push([v[ring[0]], v[ring[1]], v[ring[2]]]);
+}
+
 pub fn repair_mesh(input: &PolyMesh, rep: &mut RepairReport) -> TriSoup {
     let mut out = TriSoup { p: input.p.clone(), ..Default::default() };
     let n_v0 = input.p.len();
@@ -124,7 +169,7 @@ pub fn repair_mesh(input: &PolyMesh, rep: &mut RepairReport) -> TriSoup {
             if d02 <= d13 { f.push([v[0], v[1], v[2]]); f.push([v[0], v[2], v[3]]); }
             else { f.push([v[0], v[1], v[3]]); f.push([v[1], v[2], v[3]]); }
         } else {
-            for i in 1..s - 1 { f.push([v[0], v[i], v[i + 1]]); }
+            triangulate_ngon(&input.p, v, &mut f);
         }
     }
 
@@ -286,4 +331,44 @@ pub fn repair_mesh(input: &PolyMesh, rep: &mut RepairReport) -> TriSoup {
         if remap[a] != -1 && remap[b] != -1 { out.features.push([remap[a], remap[b]]); }
     }
     out
+}
+
+#[cfg(test)]
+mod ngon_tests {
+    use super::*;
+
+    fn area(p: &[Vec3], t: &[[i32; 3]]) -> (f64, usize) {
+        let mut total = 0.0; let mut flipped = 0;
+        for f in t {
+            let (a, b, c) = (p[f[0] as usize], p[f[1] as usize], p[f[2] as usize]);
+            let n = (b - a).cross(c - a).z * 0.5;
+            if n < 0.0 { flipped += 1; }
+            total += n;
+        }
+        (total, flipped)
+    }
+
+    #[test]
+    fn concave_u_shape_is_cut_without_overlap() {
+        // U shape: outer 4 x 3 with a 2 x 2 notch from the top; area 8
+        let pts = [(0.0, 0.0), (4.0, 0.0), (4.0, 3.0), (3.0, 3.0), (3.0, 1.0), (1.0, 1.0), (1.0, 3.0), (0.0, 3.0)];
+        let p: Vec<Vec3> = pts.iter().map(|&(x, y)| Vec3::new(x, y, 0.0)).collect();
+        let v: Vec<i32> = (0..p.len() as i32).collect();
+        let mut out = Vec::new();
+        triangulate_ngon(&p, &v, &mut out);
+        let (total, flipped) = area(&p, &out);
+        assert_eq!(out.len(), 6);
+        assert_eq!(flipped, 0);
+        assert!((total - 8.0).abs() < 1e-9, "area {total}");
+    }
+
+    #[test]
+    fn convex_pentagon_gets_three_triangles() {
+        let p: Vec<Vec3> = (0..5).map(|i| { let a = i as f64 * 1.2566370614; Vec3::new(a.cos(), a.sin(), 0.0) }).collect();
+        let v: Vec<i32> = (0..5).collect();
+        let mut out = Vec::new();
+        triangulate_ngon(&p, &v, &mut out);
+        assert_eq!(out.len(), 3);
+        assert_eq!(area(&p, &out).1, 0);
+    }
 }

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.18.1
+- **Fixed (Hard Surface, CAD parts with large n-gons): torn rims around holes.** A modelled part has big n-gons (5 to 60 sides) around holes and rims, often concave. The engine cut every n-gon as a fan from its first vertex, which overlaps and flips triangles on a concave one: the rims of the holes of the 4-hole test disc came out ragged and up to 2 mm off the surface (0.75 % of the diagonal). Now the working copy's n-gons are cut with ear clipping (`pipeline._triangulate_ngons`) and the engine does the same (`repair.rs: triangulate_ngon`, with unit tests), so any caller gets a valid triangulation. The disc at 120K with symmetry X: 108 stretched quads instead of 918, deviation 0.016 % instead of 0.75 %, 118,367 faces.
+- **Stretched quads count as flaws.** A quad whose longest edge is more than 5 times the shortest (the dense rows piled along a narrow chamfer or a hole rim) is now counted with the triangles and squeezed corners: it drives the local-flaw warning and the choice between attempts.
+- **Automatic second attempt without strip refinement (Hard Surface, quads).** When the result has more than 1 % flaws or a cluster of untidy faces, the run is repeated once with the plain sizes (no extra refinement of rounded bevels and thin strips) and the cleaner result is kept: the disc at 30K went from 166 to 18 triangles. `QUADFORGE_NO_PLAIN_RETRY=1` switches it off (for comparisons).
+- New module `core/row_fit.py` (how many quad rows fit a chamfer or bevel of a given width; tested by `tests/row_fit_test.py`) behind the internal setting `row_fit`, **off by default**: in the sweep it did not beat the plain sizes.
+- Tools: `tools/cad_battery.py` now uses the profile's 30 degree angle (it was testing 35), reads OBJ polygons, reports `stretched` quads, and has `--save` and `--no-soft-bevels`; `tools/corpus_real/` holds eight real parts as OBJ polygons.
+- Tests: `tests/blender_ngon_test.py`, `tests/row_fit_test.py`, two engine tests.
+
 ## 0.18.0
 - **Interface organised by surface type.** The sections after the Remesh button now depend on the surface button: Hard Surface shows Hard Edges and Surface Analysis, Soft Surface / Organic shows the new Detail on Curves section (moved out of Density, with Analyze Form). Symmetry, Flow Guides, Density, Isolate Zones, Extra Levels, How to Use and Advanced are always there. With custom settings (no surface button marked) every section is shown, and Advanced > Show All Options shows them whatever is marked. Hidden sections keep their values.
 - **Last Result moved directly under the Remesh button** (it was after all the optional sections).

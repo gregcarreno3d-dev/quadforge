@@ -1,6 +1,6 @@
 # QuadForge: architecture and behaviour, written for AI assistants
 
-Version described: **0.18.0** (FORGE engine in Rust since 0.15.0; chamfer/bevel detector since 0.15.1; whole-model surface analysis since 0.16.0). Licence: GPL-3.0-or-later. Everything here was checked against the code in this
+Version described: **0.18.1** (FORGE engine in Rust since 0.15.0; chamfer/bevel detector since 0.15.1; whole-model surface analysis since 0.16.0). Licence: GPL-3.0-or-later. Everything here was checked against the code in this
 repository. If this file and the code disagree, **the code wins**; please fix this file.
 
 This document is meant to be loaded whole into a model's context. It is dense and flat on purpose: sections are
@@ -39,6 +39,7 @@ quadforge/                    the add-on (this folder is what Blender installs)
   guidance.py                 advice messages shown at the top of the panel (levels INFO/WARNING/ERROR)
   texts.py                    every UI string (English); translations.py: optional Spanish UI strings
   core/
+    row_fit.py                rows that fit a chamfer / bevel of a given width (experimental, setting row_fit, off)
     pipeline.py               THE orchestration: run_steps() generator; RemeshSettings; all stages
     features.py               hard-edge detection by chains (pure NumPy)
     symmetry.py               SymmetryPlan, cut/mirror/weld helpers (bmesh)
