@@ -13,6 +13,10 @@ It handles organic sculpts and, in preview, CAD / STL parts (3D printing, mechan
 
 ![Soft Surface / Organic, version 0.17.0: a dragon head sculpt (889K source triangles) remeshed to about 80K quads with symmetry X](docs/images/soft-surface/dragon-80k.jpg)
 
+![Hard Surface, version 0.18.1: the four-hole disc (rounded hole rims, concave side band) at 120K with symmetry X: 116,735 faces, 99.9 % quads, 80 triangles, 290 poles, 23 s. The rims are now rings that follow the holes; a few spots remain](docs/images/hard-surface/disc-0.18.1-top.jpg)
+
+![The same disc from the side: rows follow the concave band; the top edge of the band still shows a slight sawtooth](docs/images/hard-surface/disc-0.18.1-side.jpg)
+
 ![Hard Surface, version 0.17.0: a CAD plate with a ring and slot remeshed to 120K quads (116,772 faces, 100 % quads, 30 triangles, 202 poles, 23 s, 1,619 hard edges kept)](docs/images/hard-surface/plate-120k-a.jpg)
 
 ![Analyze Form (new in 0.17.0) on the head: orange is where Detail on Curves will place smaller faces (eyelids, ears, nostrils, lips), blue where the faces stay normal](docs/images/soft-surface/head-analyze-form.jpg)
@@ -115,7 +119,7 @@ still produces fewer irregular vertices at 80,000 faces and above. Triangle outp
 closely as Decimate, with near-equilateral triangles. The full tables, the metric definitions and a reproducible check
 on meshes you can regenerate are in the [technical report](docs/TECHNICAL_REPORT.md#7-evaluation).
 
-More 0.17.0 results are in [`docs/images/soft-surface`](docs/images/soft-surface) (head, helmet, dragon, bull ant, with Analyze Form views) and [`docs/images/hard-surface`](docs/images/hard-surface) (plate and three cylinder parts at 120K quads, including the cases that still show flaws; see [status and limits](quadforge/docs/STATUS_AND_LIMITS.md)).
+More 0.17.0 results are in [`docs/images/soft-surface`](docs/images/soft-surface) (head, helmet, dragon, bull ant, with Analyze Form views) and [`docs/images/hard-surface`](docs/images/hard-surface) (plate, three cylinder parts and the 0.18.1 disc at 120K quads, including the cases that still show flaws, and Analyze Surfaces views of the disc: two hole rims are found as bevels and two as chamfers; see [status and limits](quadforge/docs/STATUS_AND_LIMITS.md)).
 
 ## Status
 

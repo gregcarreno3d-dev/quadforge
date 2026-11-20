@@ -246,6 +246,18 @@ engine's fan triangulation of concave n-gons (see the 0.18.1 changelog). With th
 120K, symmetry X: 118,367 faces, 0.13 % flaws, 108 stretched quads, deviation 0.016 %, 16 triangles. What is left is a
 short jagged stretch on one hole rim and a handful of triangles on the symmetry plane.
 
+### Cylinder Ver-03 in the author's Blender, 0.18.1 (120K, symmetry X)
+
+116,735 faces (2.7 % under the request), 116,655 quads (99.9 %), 80 triangles, 290 poles, 2,827 hard edges kept, 23 s,
+one warning: 16 untidy faces near (19.44, 54.24, 21.19). The hole rims are now rings that follow each hole, where
+0.18.0 showed torn rows. Images: `docs/images/hard-surface/disc-0.18.1-*.jpg`. What is still visible:
+* one hole has a small spike of triangles on its inner rim (the warning location);
+* on the underside, one hole rim has a short jagged stretch and a diamond-shaped cluster;
+* the top edge of the concave side band has a slight sawtooth;
+* star-shaped poles on the flat top near the symmetry plane.
+Analyze Surfaces on the source (`disc-analysis-bevels-*.jpg`) finds two hole rims as bevels and two as chamfers, so
+this part has both kinds, which the planned per-zone chamfer / bevel detectors are meant to treat separately.
+
 ### Cylinder Ver-03 hole rims, reproduced (0.18.0, 120K, Hard Surface, symmetry X)
 
 The ragged rows along the hole rims reproduce outside Blender. Two things were hiding them:
