@@ -266,6 +266,8 @@ Same route as the author's Blender (FBX import, scale applied, Hard Surface). Re
 - `_join_leftover_triangles` cannot remove them: it only joins triangle pairs, and these triangles are isolated among quads. Relaxing the face-angle limit from 20 to 70 degrees joined 0 of 54.
 - Conclusion: the leftover triangles come from the integer-grid step at the rims, so the remedy belongs in the engine (rim-loop constraint in `field.rs` / `param.rs`), not in the Python finishing.
 
+**Flaws by zone** (new tool `tools/zone_report.py`, same FBX 120K result): bevels 133 flawed of 7,827 faces (**1.70 %**), chamfers 36 of 16,911 (0.21 %), flat and other 118 of 91,942 (0.13 %); near the x=0 seam 2.26 % (574 faces) against 0.24 % elsewhere. So the rounded bevels are about eight times worse than chamfers and thirteen times worse than flat areas; the seam is not the main problem. The engine work should aim at bevels first.
+
 ### Cylinder Ver-03 hole rims, reproduced (0.18.0, 120K, Hard Surface, symmetry X)
 
 The ragged rows along the hole rims reproduce outside Blender. Two things were hiding them:
