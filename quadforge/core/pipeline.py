@@ -40,6 +40,7 @@ import numpy as np
 from .. import planning
 from . import detail
 from . import form_detail
+from . import row_fit
 from . import features
 from . import geometry as geo
 from . import mesh_io as mio
@@ -104,6 +105,7 @@ class RemeshSettings:
     surface_band_sides: bool = True          # with the analysis: keep both sides of every chamfer / bevel as hard edges
     use_surface_analysis: bool = False       # experimental: surface borders and chamfer/bevel sides become hard edges (CAD meshes)
     relax_quads: bool = True         # even out badly shaped quads and put them back on the surface
+    row_fit: bool = False                    # size chamfer / bevel strips so a whole number of rows fits (core/row_fit.py)
     soft_bevel_detail: float = 0.5           # edge length multiplier on the facets of rounded bevels (1 = no refinement)
     thin_band_floor: float = 0.0             # internal: finest size multiplier of thin strips (0 = the default floors); set by the rerun
     use_seams: bool = True
@@ -251,6 +253,7 @@ def _read_source(context, original, settings: RemeshSettings, uses_zones: bool,
         raise PipelineError("The mesh has zero size.")
 
     info = SourceInfo(evaluated_object, depsgraph, diagonal, len(mesh.polygons))
+    _triangulate_ngons(mesh)
     if _wants_surface_tree(settings, uses_zones):
         try:
             from mathutils.bvhtree import BVHTree
@@ -259,6 +262,30 @@ def _read_source(context, original, settings: RemeshSettings, uses_zones: bool,
             warnings.append(f"Could not build the surface tree ({error!r}). "
                             f"Relaxing the quads and the symmetry check are skipped.")
     return info, mesh
+
+
+def _triangulate_ngons(mesh) -> int:
+    """Cut the n-gons (five or more sides) of the working copy into triangles with ear clipping. Returns how many.
+
+    A modelled CAD part has large n-gons around holes and rims, often concave. The engine's own cut of an n-gon is a
+    fan from the first vertex, which overlaps and flips triangles on a concave one (the rims of a hole then come out
+    torn and up to 2 mm off the surface); the hard-edge detection also reads one normal per n-gon. Ear clipping gives
+    a valid triangulation of any simple polygon. Quads are left alone (the engine picks the shorter diagonal).
+    """
+    totals = np.empty(len(mesh.polygons), dtype=np.int64)
+    mesh.polygons.foreach_get("loop_total", totals)
+    if not (totals > 4).any():
+        return 0
+    bm = bmesh.new()
+    try:
+        bm.from_mesh(mesh)
+        big = [face for face in bm.faces if len(face.verts) > 4]
+        bmesh.ops.triangulate(bm, faces=big, quad_method="BEAUTY", ngon_method="EAR_CLIP")
+        bm.to_mesh(mesh)
+    finally:
+        bm.free()
+    mesh.update()
+    return len(big)
 
 
 GUIDE_ATTRIBUTE = "quadforge_guide"
@@ -519,7 +546,7 @@ class LevelConstraints:
 
 
 def _refine_thin_bands(mesh, arrays, hard: np.ndarray, areas: np.ndarray, quad_length: float, band: np.ndarray,
-                       bevel_scale: float, floor: float = 0.0):
+                       bevel_scale: float, floor: float = 0.0, row_fit_on: bool = False):
     """Faces between hard edges that are narrower than a quad (a chamfer strip, the facets of a rounded bevel) cannot hold
     a row of quads at the normal size: the rows zigzag across them. Give those faces a smaller target size, in
     proportion to the band width; the engine blends it into the surroundings. The strongest refinement is tried first;
@@ -543,12 +570,24 @@ def _refine_thin_bands(mesh, arrays, hard: np.ndarray, areas: np.ndarray, quad_l
     current = mio.read_attribute(mesh, DENSITY_ATTRIBUTE, arrays.n_verts)
 
     def multiplier_for(floor: float) -> np.ndarray:
-        scale = np.clip(width / (reach * quad_length), floor, 1.0)
+        if row_fit_on:
+            # a whole number of rows fits the strip (row_fit.py); chamfers and bevels alike, zone by zone
+            fitted = row_fit.row_fit_scale(width / quad_length, floor if floor > 0.0 else 0.0)
+            scale = np.where(width < reach * quad_length, fitted, 1.0)
+        else:
+            scale = np.clip(width / (reach * quad_length), floor, 1.0)
         scale[length < THIN_BAND_MIN_LENGTH * quad_length] = 1.0      # short strips (gear teeth) are left alone
         face_scale = scale[patch]
         multiplier = np.ones(arrays.n_verts)
         np.minimum.at(multiplier, arrays.loop_verts, face_scale[arrays.loop_poly])
-        multiplier[band] = np.minimum(multiplier[band], bevel_scale)      # the facets of a rounded bevel need more
+        if row_fit_on:
+            # the facets of a rounded bevel: its own width decides, however wide the strip is (up to the detector's limit)
+            band_fit = np.ones(arrays.n_verts)
+            wide_fit = row_fit.row_fit_scale(width / quad_length, floor if floor > 0.0 else 0.0)
+            np.minimum.at(band_fit, arrays.loop_verts, wide_fit[patch][arrays.loop_poly])
+            multiplier[band] = np.minimum(multiplier[band], band_fit[band])
+        else:
+            multiplier[band] = np.minimum(multiplier[band], bevel_scale)      # the facets of a rounded bevel need more
         if current is not None:
             multiplier = np.minimum(multiplier, np.asarray(current, dtype=np.float64))
         return multiplier
@@ -640,7 +679,7 @@ def _mark_hard_edges_and_zones(mesh, settings: RemeshSettings, quads_for_piece: 
     fallback_density = None
     if settings.soft_bevels and settings.soft_bevel_detail < 1.0 and geometric.any() and soft_band is not None:
         _refined, fallback_density = _refine_thin_bands(mesh, arrays, hard & ~planes, areas, quad_length, soft_band,
-                                                        settings.soft_bevel_detail, settings.thin_band_floor)
+                                                        settings.soft_bevel_detail, settings.thin_band_floor, settings.row_fit)
     mio.write_edge_flag(mesh, "use_edge_sharp", hard)
     segments = features.feature_segments(arrays, geometric) if geometric.any() else None
     return LevelConstraints(hard_count_shown, quad_length, segments, guide_lines > 0, fallback_density)
@@ -690,6 +729,8 @@ ATTEMPT_SCALES = (1.0, 0.985, 1.015, 0.97, 1.03)   # the requested count of each
 BAD_QUAD_SINE = 0.3                                # a quad with a corner whose sine is below this counts as a flaw
 SECOND_CHANCE_FLAW_SHARE = 0.03                     # a Hard Surface result with more flaws than this gets one rerun with finer strips
 FINAL_COUNT_RETRY = 0.05                            # one corrected rerun when the finished count is further than this from the request
+STRETCHED_QUAD_RATIO = 5.0                         # a quad whose longest edge is more than this many times its shortest is a flaw
+PLAIN_RETRY_FLAW_SHARE = 0.01                       # Hard Surface: more flaws than this (or a cluster) gets a rerun without strip refinement
 COUNT_TOLERANCE = 0.06                             # the engine itself lands within 4 to 6 percent: only beyond that is a count penalised
 
 
@@ -719,6 +760,10 @@ def _flawed_faces(mesh) -> np.ndarray:
             np.linalg.norm(before, axis=1) * np.linalg.norm(after, axis=1) + 1e-30)
         worst = np.minimum(worst, sine)
     flawed[quad_faces[worst < BAD_QUAD_SINE]] = True
+    # stretched quads: the thin, dense rows piled up along a narrow chamfer or a hole rim keep right-angled corners, so the
+    # corner test above misses them; the longest edge being several times the shortest gives them away
+    lengths = np.stack([np.linalg.norm(corners[:, (corner + 1) % 4] - corners[:, corner], axis=1) for corner in range(4)], axis=1)
+    flawed[quad_faces[lengths.max(axis=1) > STRETCHED_QUAD_RATIO * np.maximum(lengths.min(axis=1), 1e-30)]] = True
     return flawed
 
 
@@ -1369,7 +1414,7 @@ def run_steps(context, original, settings: RemeshSettings,
         return result
     target = settings.target_quads
     best, floor = result, 0.0
-    count_tried = fine_tried = False
+    count_tried = fine_tried = plain_tried = False
     while True:
         first = best.levels[0]
         faces = len(first.object.data.polygons)
@@ -1381,6 +1426,13 @@ def run_steps(context, original, settings: RemeshSettings,
               and _layout_flaws(first.object.data) / max(1, faces) > SECOND_CHANCE_FLAW_SHARE):
             fine_tried = True
             retry = dataclasses.replace(settings, thin_band_floor=THIN_BAND_FINE_FLOOR)
+        elif (not plain_tried and not os.environ.get("QUADFORGE_NO_PLAIN_RETRY") and settings.use_surface_analysis and settings.soft_bevels and settings.output == "QUADS"
+              and settings.soft_bevel_detail < 1.0 and (
+                  _layout_flaws(first.object.data) / max(1, faces) > PLAIN_RETRY_FLAW_SHARE
+                  or _worst_flaw_cluster(first.object.data)[0] >= THIN_WARNING_CLUSTER)):
+            # the refinement of strips can itself tear a rounded rim (hole rims of a disc): try the plain sizes once
+            plain_tried = True
+            retry = dataclasses.replace(settings, soft_bevel_detail=1.0, thin_band_floor=floor)
         else:
             _warn_thin_strips(best, target, settings)
             return best
@@ -1393,6 +1445,8 @@ def run_steps(context, original, settings: RemeshSettings,
             second.object.data.name = name
             second.target_quads = target
             best, floor = second_result, retry.thin_band_floor
+            if retry.soft_bevel_detail >= 1.0:
+                settings = dataclasses.replace(settings, soft_bevel_detail=1.0)   # later reruns keep the plain sizes
         else:
             _discard(second)
 

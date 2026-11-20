@@ -195,7 +195,7 @@ along circular hole rims are not aligned (see the Cylinder Ver-03 sections above
 2. Two dedicated detectors, one for **chamfers** (flat strips between two planes) and one for **bevels / fillets** (curved strips),
    that measure the width and the profile **per zone**, so a chamfer or bevel that changes width along its length gets the
    right number of rows in each place instead of one global setting.
-3. Calibrate on the whole corpus (`tools/corpus_real/` plus the synthetic parts) with the `stretched` count next to the verdict.
+3. Calibrate on the whole corpus (`tools/corpus_real/` (OBJ polygons) plus the synthetic parts) with the `stretched` count next to the verdict.
 Until then, `Rounded Bevels` off or a nearby face count can give a cleaner rim on some parts.
 
 ## Suggested roadmap
@@ -226,7 +226,7 @@ Where the remaining flaws sit (flange 20K, heat sink 10K, measured on the finish
 
 ## Symmetry X battery on the new Hard Surface test objects (0.18.0)
 
-The parts now live in `tools/corpus_real/`.
+The parts now live in `tools/corpus_real/` (OBJ polygons).
 
 | Part | Target | Symmetry | Result |
 |---|---|---|---|

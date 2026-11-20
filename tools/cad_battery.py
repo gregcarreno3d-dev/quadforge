@@ -41,6 +41,21 @@ CRITERIA = {
 
 def load_part(path):
     """(coordinates, face sizes, loop vertex indices) of an STL or .fmesh file."""
+    if path.lower().endswith(".obj"):
+        # polygons as they are (quads and n-gons), the way Blender holds a modelled part
+        verts, sizes, idx = [], [], []
+        with open(path) as handle:
+            for line in handle:
+                parts = line.split()
+                if not parts:
+                    continue
+                if parts[0] == "v":
+                    verts.append([float(x) for x in parts[1:4]])
+                elif parts[0] == "f":
+                    face = [int(token.split("/")[0]) - 1 for token in parts[1:]]
+                    sizes.append(len(face))
+                    idx.extend(face)
+        return np.array(verts, dtype=np.float32), np.array(sizes, dtype=np.int32), np.array(idx, dtype=np.int32)
     if path.lower().endswith(".stl"):
         from stlio import read_stl
         co, tris = read_stl(path)
@@ -96,8 +111,14 @@ def stretched_quads(positions, faces, ratio=5.0):
 
 def max_deviation(source_mesh, result_mesh):
     """Largest distance from a result vertex to the source surface."""
+    import bmesh
     from mathutils.bvhtree import BVHTree
-    tree = BVHTree.FromPolygons([v.co[:] for v in source_mesh.vertices], [p.vertices[:] for p in source_mesh.polygons])
+    # triangulate the way Blender does (ear clipping): a fan over a large concave n-gon would cover the wrong area
+    bm = bmesh.new()
+    bm.from_mesh(source_mesh)
+    bmesh.ops.triangulate(bm, faces=bm.faces[:])
+    tree = BVHTree.FromBMesh(bm)
+    bm.free()
     worst = 0.0
     for vertex in result_mesh.vertices:
         hit = tree.find_nearest(vertex.co)
@@ -175,7 +196,7 @@ def run_part(bpy, pipeline, path, args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("inputs", nargs="+", help="STL / .fmesh files or folders")
+    parser.add_argument("inputs", nargs="+", help="STL / OBJ / .fmesh files or folders")
     parser.add_argument("--target", type=int, default=20000, help="requested face count (default 20000)")
     parser.add_argument("--sym", choices=["none", "x"], default="none", help="symmetry on X (default none)")
     parser.add_argument("--attempts", type=int, default=1, help="Quality Attempts (default 1)")
@@ -187,7 +208,7 @@ def main():
     paths = []
     for item in args.inputs:
         if os.path.isdir(item):
-            for pattern in ("*.stl", "*.STL", "*.fmesh"):
+            for pattern in ("*.stl", "*.STL", "*.obj", "*.fmesh"):
                 paths += sorted(glob.glob(os.path.join(item, pattern)))
         else:
             paths.append(item)
