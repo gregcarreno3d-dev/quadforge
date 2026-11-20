@@ -75,14 +75,15 @@ def main():
         zone_of.append(names.get(int(band), "flat / other"))
     zone_of = np.array(zone_of)
     print(f"{n} faces, {int(flawed.sum())} flawed ({100 * flawed.mean():.2f} %)")
-    print(f"{'zone':<28}{'faces':>8}{'flawed':>8}{'share':>8}")
+    tri = np.array([len(poly.vertices) == 3 for poly in res.data.polygons])
+    print(f"{'zone':<28}{'faces':>8}{'flawed':>8}{'share':>8}{'tris':>7}{'quads':>7}")
     groups = {}
     for z in sorted(set(zone_of)):
         mask = zone_of == z
         groups.setdefault(z.split()[0] if z != "flat / other" else z, []).append(mask)
     for kind, masks in groups.items():
         mask = np.any(masks, axis=0)
-        print(f"{kind:<28}{int(mask.sum()):>8}{int((flawed & mask).sum()):>8}{100 * (flawed & mask).sum() / max(1, mask.sum()):>7.2f}%")
+        print(f"{kind:<28}{int(mask.sum()):>8}{int((flawed & mask).sum()):>8}{100 * (flawed & mask).sum() / max(1, mask.sum()):>7.2f}%{int((tri & mask).sum()):>7}{int((flawed & ~tri & mask).sum()):>7}")
     xs = np.array([p.center[0] for p in res.data.polygons])
     near = np.abs(xs) <= args.sym_tol * 10
     print(f"{'near the x=0 seam':<28}{int(near.sum()):>8}{int((flawed & near).sum()):>8}{100 * (flawed & near).sum() / max(1, near.sum()):>7.2f}%")

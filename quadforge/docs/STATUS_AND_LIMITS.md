@@ -268,6 +268,8 @@ Same route as the author's Blender (FBX import, scale applied, Hard Surface). Re
 
 **Flaws by zone** (new tool `tools/zone_report.py`, same FBX 120K result): bevels 133 flawed of 7,827 faces (**1.70 %**), chamfers 36 of 16,911 (0.21 %), flat and other 118 of 91,942 (0.13 %); near the x=0 seam 2.26 % (574 faces) against 0.24 % elsewhere. So the rounded bevels are about eight times worse than chamfers and thirteen times worse than flat areas; the seam is not the main problem. The engine work should aim at bevels first.
 
+**What the bevel flaws are**: of the 133 flawed faces in bevels, 29 are triangles and 104 are squeezed or stretched quads. The 167 stretched quads of the whole part have a median shortest edge of 0.16 mm against a typical edge of 0.91 mm, so they are strips squeezed to a fifth of a row. Tried and not adopted: collapsing the short edges of stretched quads locally (limit 0.15 and 0.3 of the median edge). Both limits removed 2 flawed faces out of 287 and turned the collapsed quads into triangles (54 to 104 and 164). The thin strips have to be avoided where the rows are laid out (engine), not cleaned afterwards.
+
 ### Cylinder Ver-03 hole rims, reproduced (0.18.0, 120K, Hard Surface, symmetry X)
 
 The ragged rows along the hole rims reproduce outside Blender. Two things were hiding them:
