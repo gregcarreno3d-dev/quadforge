@@ -188,6 +188,16 @@ What the screenshots show:
   copied by two separate nearest-face lookups (`detail.copy_face_data` and `zonedata.copy_sculpt_data`), so a face
   whose centre lies exactly between two zones can be given one zone by each. It is cosmetic (one face of a zone border).
 
+## Next: a larger change for bevels, chamfers and hole rims (planned, not started)
+Chamfers and bevels are central to Hard Surface and CAD work, and the 4-hole disc shows the current limit: the rows
+along circular hole rims are not aligned (see the Cylinder Ver-03 sections above). The plan, in order:
+1. A rim-loop constraint in `engine-rs`: the cross field and the grid follow circular hard-edge loops (rings around holes).
+2. Two dedicated detectors, one for **chamfers** (flat strips between two planes) and one for **bevels / fillets** (curved strips),
+   that measure the width and the profile **per zone**, so a chamfer or bevel that changes width along its length gets the
+   right number of rows in each place instead of one global setting.
+3. Calibrate on the whole corpus (`tools/corpus_real/` plus the synthetic parts) with the `stretched` count next to the verdict.
+Until then, `Rounded Bevels` off or a nearby face count can give a cleaner rim on some parts.
+
 ## Suggested roadmap
 0.5.x: fixes after the author's tests. 0.6: lattice extraction. 0.7: integer-grid parametrization. 0.8: alignment to hard edges. Next: borders, a faster solver, thin-part handling. Then the Rust port (parallel version) and publishing.
 
