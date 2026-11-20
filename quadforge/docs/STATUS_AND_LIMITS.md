@@ -258,6 +258,14 @@ one warning: 16 untidy faces near (19.44, 54.24, 21.19). The hole rims are now r
 Analyze Surfaces on the source (`disc-analysis-bevels-*.jpg`) finds two hole rims as bevels and two as chamfers, so
 this part has both kinds, which the planned per-zone chamfer / bevel detectors are meant to treat separately.
 
+### Cylinder Ver-03 through the FBX path, 120K, symmetry X (0.18.1, reproduced 2026-11-20)
+
+Same route as the author's Blender (FBX import, scale applied, Hard Surface). Result: 116,680 faces, 54 triangles, 99 squeezed corners, 167 stretched quads, 267 s in the cloud container.
+
+- The spike on a hole rim **reproduces**: a single tiny triangle at about (19.1, 52.4, 21.3) inside the thin rim strip. Other clusters: (0, 79, -21.7) on the symmetry plane (6 triangles), (83, 1.7, -24.8) on the outer rim, and several 2-triangle clusters along the hole rims and the lower band.
+- `_join_leftover_triangles` cannot remove them: it only joins triangle pairs, and these triangles are isolated among quads. Relaxing the face-angle limit from 20 to 70 degrees joined 0 of 54.
+- Conclusion: the leftover triangles come from the integer-grid step at the rims, so the remedy belongs in the engine (rim-loop constraint in `field.rs` / `param.rs`), not in the Python finishing.
+
 ### Cylinder Ver-03 hole rims, reproduced (0.18.0, 120K, Hard Surface, symmetry X)
 
 The ragged rows along the hole rims reproduce outside Blender. Two things were hiding them:
