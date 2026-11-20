@@ -242,3 +242,13 @@ Measured on the 4-hole disc at 120K, symmetry X: STL input 120,184 quads + 124 t
 Blender holds it (FBX, quad mesh) 115,192 quads, 0 triangles, 1,024 stretched. Both show the same jagged rim in a top
 view, so this is an engine layout problem on thin rim steps, not a Blender-side setting. Next: resample the rim loops
 of holes evenly and keep the rows along them.
+
+### Rounded Bevels on the 4-hole disc (experiment, 30K, symmetry X, 30 degrees)
+
+Same part, the quad mesh Blender holds (FBX import, applied scale): Rounded Bevels on = 29,359 faces, 166 triangles,
+220 squeezed, 184 stretched; Rounded Bevels off = 29,707 faces, 14 triangles, 50 squeezed, 46 stretched, and a clean
+top view. The rows that follow the rounded rim (rim fillet about 3 mm wide) are what tears there. It is **not** a
+general fix: on the STL-input corpus at 30K (14 of 26 parts finished before the run was interrupted) switching it off
+helped the bracket (stretched 111 to 46) and the disc (541 to 350), but changed the face count by more than 6 % on
+Test_Object_Ver-04 and the enclosure. Not tested at 120K yet. `tools/cad_battery.py --no-soft-bevels` runs the
+comparison.

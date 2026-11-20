@@ -132,6 +132,8 @@ def run_part(bpy, pipeline, path, args):
     settings.shading = "FLAT"
     settings.quality_attempts = args.attempts
     settings.sym_x = args.sym == "x"
+    if args.no_soft_bevels:
+        settings.soft_bevels = False
     started = time.time()
     result = pipeline.run(bpy.context, obj, settings)
     seconds = time.time() - started
@@ -178,6 +180,7 @@ def main():
     parser.add_argument("--sym", choices=["none", "x"], default="none", help="symmetry on X (default none)")
     parser.add_argument("--attempts", type=int, default=1, help="Quality Attempts (default 1)")
     parser.add_argument("--csv", help="write the table to this CSV file")
+    parser.add_argument("--no-soft-bevels", action="store_true", help="switch Rounded Bevels off (experiment)")
     parser.add_argument("--save", help="folder: write every result as a Wavefront OBJ there for inspection")
     args = parser.parse_args()
 
