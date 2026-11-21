@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.18.5
+- **Engine (Rust): two marked lines closer than 3 cells now count as one.** The two edges of a narrow chamfer or hole-rim bevel (about 0.4 cell apart on the four-hole disc) cannot both be rows of the lattice, and landed on neighbouring rows as very thin quads that the Python finishing then collapsed into triangles. `FORGE_THINFEAT` default raised from 0.75 to 3 cells (`engine-rs/src/pipeline.rs`, `long_feature_chains`; `0` disables).
+- Measured on the 8 real parts at 30K, no symmetry, deviation unchanged: stretched quads 674 to 357 in total (Cylinder_Ver-01 362 to 63, Test_Object_Ver-01 171 to 109), mean flaws 0.30 % to 0.20 %. **Not better everywhere:** Cylinder_Ver-03 went from 31 to 89 stretched quads (0.21 % to 0.54 % flaws); at 1.5 cells the total was worse (927). Engine tests 29/29.
+- **After installing, quit Blender completely and open it again.**
+
 ## 0.18.4
 - **Straighter feature lines along chamfers and bevels (Hard Surface with Analyze Surfaces).** The classification of a triangulated source is stair-stepped along the borders of chamfers and bevels (single faces on the wrong side), and the feature lines made from those borders inherited the steps. A majority filter (`surfaces.smooth_face_surface`, two passes, setting `smooth_surface_borders`) now moves a face to the neighbouring surface that holds most of its neighbours. The middle of strips one face wide is kept; their open ends lose up to one face per pass (a rule that protected the ends changed nothing on the test parts and lost the gain).
 - Measured at 30K quads, no symmetry: four-hole disc (Cylinder_Ver-03) flaws 1.15 % to 0.21 %, stretched quads 203 to 31, sharp-chain deviation above 0.15 mm 69 to 29 vertices. **Mixed result:** on Test_Object_Ver-04 flaws went from 0.09 % to 0.11 % (battery) and the sharp-chain deviation above 0.15 mm from 6 to 38 vertices, so the filter is a net gain on the disc and not proven elsewhere. `tools/cad_battery.py --no-smooth` switches it off to compare.

@@ -1,4 +1,4 @@
-# Architecture — QuadForge 0.18.4
+# Architecture — QuadForge 0.18.5
 
 Technical document for developers and AIs. Everything described exists in this package.
 

@@ -2,13 +2,13 @@
 
 See `EXPERIMENT_LOG.md` for the short list of what was tried, kept and rejected.
 
-## Current status (0.18.4)
+## Current status (0.18.5)
 - **Surface analysis and chamfer/bevel detection (preview).** Tested on real CAD parts (a cylinder plate, a perforated plate, a flange, a spool-like part) and on synthetic parts (prisms, frustums, a tilted frustum, a UV sphere, a bracket with a tilted hole, a six-hole flange, a dome, a cone on a cylinder, an off-centre boss). Unit tests live in `engine-rs/src/stages/surfaces.rs`; the Blender test is `tests/blender_surfaces_test.py`.
 - **Known limits of the analysis:** surfaces of revolution are searched only about the X, Y and Z axes through the centre of the model; fillets made of very thin facets and coarse 3-facet fillets are only partly detected; with *Use Surface Analysis* about 2 % of the faces can stay triangles (isolated ones in the quad flow); the detector is in the Linux engine checked into the repository, and in Windows / macOS builds made by CI.
 - **Speed on CAD parts:** a plate with a strong size variation falls back after the second attempt (about 12 s instead of 26 s at 4K quads).
 
 ## Tested
-- 0.18.4: ui, reload, relax, ngon, hard, integration (26 of 26), surfaces, zones, guides, head pass; an operator remesh on Test Object Ver-04 at 30K calls the relaxation
+- 0.18.5: ui, reload, relax, ngon, hard, integration (26 of 26), surfaces, zones, guides, head pass; an operator remesh on Test Object Ver-04 at 30K calls the relaxation
 - 0.18.2: all Blender and Python suites pass (hard, integration 26 of 26, surfaces, bevel, forge, form_detail, zone_detail, zones, guides, head, preview, subdiv, uv, vgzones, surface, ui, ngon, relax, row_fit; matrix quick set 23 of 23); CAD battery at 30K, no symmetry: 8 of 8 real parts and 20 of 20 synthetic parts
 - 0.18.1: all Blender and Python suites pass (hard, integration, surfaces, bevel, forge, form_detail, zone_detail, zones, guides, head, preview, subdiv, uv, vgzones, surface, ui, ngon, row_fit; matrix quick set 23 of 23), engine tests 7 of 7, battery on the 20 synthetic parts at 30K (26 of 26 with the real parts) and on the eight polygon parts at 30K (8 of 8).
 - 0.18.0 Blender suite (hard, integration, surfaces, bevel, forge, form_detail, zone_detail, zones, guides, head, preview, subdiv, uv, vgzones, surface, ui): all pass; the matrix (quick set) gives 23 of 23. The 0.18.0 change is interface only, so the remesh results are the 0.17.0 ones (the full matrix gave 66 of 67 in 0.17.0: gear-like with 30 hard edges, 97 % quads).
@@ -329,7 +329,7 @@ sizing: the grid is locked to the symmetry plane and the outer rim, and the engi
 hole rim without leaving a defect there. The fix has to constrain the cross field (and the grid) along circular rim
 loops, in `engine-rs`; the default has not been changed yet because the sweep above is one part.
 
-## 0.18.4: majority filter on the surface classification
+## 0.18.5: majority filter on the surface classification
 
 Where: `core/surfaces.py::smooth_face_surface`, called from `core/pipeline.py` (`_mark_hard_edges_and_zones`), setting `smooth_surface_borders`. Hypothesis: the stair-stepped classification along chamfer and bevel borders makes jagged feature lines.
 
@@ -347,3 +347,16 @@ Measured at 30K quads, no symmetry (`tools/cad_battery.py`, `tools/zone_report.p
 Reading: a clear gain on the disc, a small loss on Test_Object_Ver-04 (the chamfer zone went from 10 to 42 flawed faces in the zone report). Not proven on the rest of the corpus (each run takes about 3 minutes in the cloud). Next: run the 8 real and 20 synthetic parts with and without the filter and decide the default from the whole table.
 
 A variant that protects the open ends of one-face strips (flip a face with one own neighbour only if that neighbour is weakly attached too) gave exactly the "filter off" numbers on both parts: the gain comes from the faces next to strip ends and notches, so the plain rule stays. Unit tests: `quadforge/tests/test_surface_smooth.py`.
+
+## 0.18.5: marked-line distance in the engine
+
+Where: `engine-rs/src/pipeline.rs::long_feature_chains` (`FORGE_THINFEAT`, cells). Raw engine output of the disc has 0 triangles but thin rows (0.07 mm against a 1.86 mm cell) along hole rims; the triangles appear when Python collapses them.
+
+| `FORGE_THINFEAT` | stretched quads, 8 real parts (30K) | disc (Cylinder_Ver-03) stretched | flaws, mean of 8 |
+|---|---|---|---|
+| 0.75 (before) | 674 | 31 | 0.30 % |
+| 1.5 | 927 | 62 | 0.41 % |
+| 3 (now) | 357 | 89 | 0.20 % |
+
+Per part: Cylinder_Ver-01 362 / 289 / 63, Test_Object_Ver-01 171 / 482 / 109. Non-monotonic, so the choice is a compromise; a real fix keeps one line of the pair but pins the other to the same row (ring constraint). Next.
+
