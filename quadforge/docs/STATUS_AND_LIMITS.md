@@ -259,6 +259,19 @@ one warning: 16 untidy faces near (19.44, 54.24, 21.19). The hole rims are now r
 Analyze Surfaces on the source (`disc-analysis-bevels-*.jpg`) finds two hole rims as bevels and two as chamfers, so
 this part has both kinds, which the planned per-zone chamfer / bevel detectors are meant to treat separately.
 
+### Symmetry X against no symmetry, 120K (0.18.2, measured 2026-11-21)
+
+| Part | Symmetry X | No symmetry |
+|---|---|---|
+| Test Object Ver-04 | 118,739 faces, **54 triangles**, 0.09 % flaws, 106 stretched | 119,464 faces, **0 triangles**, 0.04 % flaws, 154 stretched |
+| Cylinder Ver-03 | 118,368 faces, 68 triangles, 0.13 % flaws, 84 stretched | 120,042 faces, 44 triangles, 0.12 % flaws, 93 stretched |
+
+On Ver-04, 34 of the 54 triangles sit on the symmetry plane (x = 0); 26 have an edge on it, in mirrored pairs that cannot be merged into a convex quad (the triangle has a right or obtuse angle at the seam). Seam vertices with 3 faces on one side (valence 6 after mirroring) come from the half-mesh border, where the grid is not aligned to the cut. Work-around today: switch symmetry off for parts where clean topology matters more than an exactly mirrored mesh. Planned: align the grid to the cut in the engine (border as a feature line with whole-row parity).
+
+Tried and not adopted (relaxation in `core/detail.py`): relaxing triangles and folded faces together with two rings around them changed no count on the corpus.
+
+Not a bug: "Widest Band (mm) 0.00" in the Analyze Surfaces panel means Auto.
+
 ### Cylinder Ver-03 through the FBX path, 120K, symmetry X (0.18.1, reproduced 2026-11-20)
 
 Same route as the author's Blender (FBX import, scale applied, Hard Surface). Result: 116,680 faces, 54 triangles, 99 squeezed corners, 167 stretched quads, 267 s in the cloud container.
