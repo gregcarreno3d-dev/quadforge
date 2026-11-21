@@ -77,7 +77,9 @@ def smooth_face_surface(arrays, face_surface: np.ndarray, rounds: int = 2) -> np
 
     The classification of a triangulated source is stair-stepped along the borders of chamfers and bevels (single
     faces on the wrong side); the feature lines made from those borders inherit the steps. Strips one face wide keep
-    their faces (they have two neighbours of their own surface).
+    their middle faces (two neighbours of their own surface); the open ends of a strip are eaten by up to one face per
+    pass. Measured: the rule that protected the ends changed nothing on the test parts (and lost the gain), so the
+    ends are accepted as the price.
     """
     first, second, counts = geo.edge_face_pairs(arrays)
     two = np.flatnonzero(counts == 2)

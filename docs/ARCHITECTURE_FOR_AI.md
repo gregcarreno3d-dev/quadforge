@@ -62,7 +62,7 @@ quadforge/                    the add-on (this folder is what Blender installs)
   docs/                       user guide, decisions, status and limits, benchmark protocol
 engine-rs/src/                FORGE engine source (Rust; see engine-rs/README.md for the work-area map)
 engine/src/                   original C++17 engine (used until 0.14; reference, not shipped)
-tools/                        build.py (Zig cross-compiler), package.py, make_delivery.py, quality_metrics.py, cad_battery.py, organic_battery.py,
+tools/                        build.py (Zig cross-compiler), package.py, make_delivery.py, quality_metrics.py, cad_battery.py, zone_report.py, plot_topology.py, organic_battery.py,
                               meshgen.py (synthetic meshes), fmesh.py, stlio.py, harness.py
 tests/                        early engine tests t01..t05
 docs/                         this documentation (technical report, this file, images/)
@@ -263,7 +263,7 @@ merge valence-2 dead ends (≤ 6 rounds), `improveQuads(..., 40 sweeps, threshol
 
 ### 4.2 Surface analysis (0.16)
 
-See `quadforge/docs/SURFACE_ANALYSIS.md`. `forge surfaces --in X.fmesh [--json OUT]` prints `SF <json>`; python: `core/surfaces.py::analyze_arrays`, operators `quadforge.analyze_surfaces`, `select_borders`, `select_surface_kind`; attributes `qf_surface`, `qf_surface_kind`, `qf_border`. In `core/pipeline.py` (`_mark_hard_edges_and_zones`) `settings.use_surface_analysis` adds sharp borders (and band sides when `surface_band_sides`) to the geometric hard edges; failures only add a warning.
+See `quadforge/docs/SURFACE_ANALYSIS.md`. `forge surfaces --in X.fmesh [--json OUT]` prints `SF <json>`; python: `core/surfaces.py::analyze_arrays`, operators `quadforge.analyze_surfaces`, `select_borders`, `select_surface_kind`; attributes `qf_surface`, `qf_surface_kind`, `qf_border`. In `core/pipeline.py` (`_mark_hard_edges_and_zones`) `settings.use_surface_analysis` adds sharp borders (and band sides when `surface_band_sides`) to the geometric hard edges, after `surfaces.smooth_face_surface` (majority filter, setting `smooth_surface_borders`, default on; `tools/cad_battery.py --no-smooth` turns it off to compare); failures only add a warning.
 
 ### 4.3 Chamfer and bevel detector (`forge bands`, `stages/bands.rs`)
 
@@ -338,7 +338,7 @@ With `use_surface_analysis` and quad output, `pipeline._join_leftover_triangles`
 | Engine hard cases | `.../t08_hard_cases.py` (29 cases) | open surfaces, parts, dirty input, odd scales, dense scans, density, triangles |
 | Engine basics | `t01`–`t06` | sphere, suite, repair fuzz, pairing, extraction |
 | Add-on in Blender | `quadforge/tests/blender_integration_test.py` (29), `blender_matrix_test.py` (67), `blender_forge_test.py`, `blender_guides_test.py`, `blender_uv_test.py`, `blender_zones_test.py`, `blender_vgzones_test.py`, `blender_surface_test.py`, `blender_hard_test.py`, `blender_preview_test.py`, `blender_zone_detail_test.py`, `blender_subdiv_test.py`, `blender_head_test.py` (synthetic head) | run with the `bpy` module (`pip install bpy numpy scikit-image`); the Linux engine must be in `quadforge/bin/linux/` |
-| Pure Python | `test_features.py`, `test_geometry.py`, `test_planning.py`, `test_guidance.py`, `test_forge_backend.py` | no Blender needed (the last one runs the real engine) |
+| Pure Python | `test_features.py`, `test_geometry.py`, `test_planning.py`, `test_guidance.py`, `test_forge_backend.py`, `test_surface_smooth.py` | no Blender needed (the last one runs the real engine) |
 | Metrics | `tools/quality_metrics.py` | scaled Jacobian, irregular share, distance to source |
 
 Detector regression: build with `cargo build --release`, run `forge bands --in part.fmesh` on the reference parts and compare band counts; `cargo test --release` covers the unit tests.

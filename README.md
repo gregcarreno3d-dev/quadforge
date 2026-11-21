@@ -17,6 +17,8 @@ It handles organic sculpts and, in preview, CAD / STL parts (3D printing, mechan
 
 ![The same disc from the side: rows follow the concave band; the top edge of the band still shows a slight sawtooth](docs/images/hard-surface/disc-0.18.1-side.jpg)
 
+![Hard Surface, version 0.18.4 against 0.18.3: the four-hole disc at 30K quads, no symmetry, top view, triangles in red. 50 triangles (0.18.3) against 8 (0.18.4) after the surface classification is smoothed along chamfers and bevels. Made with tools/plot_topology.py](docs/images/hard-surface/disc-0.18.4-compare.jpg)
+
 ![Hard Surface, version 0.17.0: a CAD plate with a ring and slot remeshed to 120K quads (116,772 faces, 100 % quads, 30 triangles, 202 poles, 23 s, 1,619 hard edges kept)](docs/images/hard-surface/plate-120k-a.jpg)
 
 ![Analyze Form (new in 0.17.0) on the head: orange is where Detail on Curves will place smaller faces (eyelids, ears, nostrils, lips), blue where the faces stay normal](docs/images/soft-surface/head-analyze-form.jpg)
@@ -102,7 +104,7 @@ GitHub's **Cite this repository** button uses [`CITATION.cff`](CITATION.cff).
 
 ## Surface analysis, chamfers and bevels (preview)
 
-For CAD-style meshes (triangulated STL, mostly 3D printing, millimetres) **Analyze Surfaces** splits the whole model into planes, cylinders, spheres, cones, surfaces of revolution and free-form patches and lists the borders between them; the **Hard Surface** remesh can use it to keep the real limits of every wall (experimental option). The same engine finds the small transition
+For CAD-style meshes (triangulated STL, mostly 3D printing, millimetres) **Analyze Surfaces** splits the whole model into planes, cylinders, spheres, cones, surfaces of revolution and free-form patches and lists the borders between them; the **Hard Surface** remesh can use it to keep the real limits of every wall (experimental option; since 0.18.4 a majority filter first straightens the stair-stepped borders of chamfers and bevels, `surfaces.smooth_face_surface`). The same engine finds the small transition
 faces between big surfaces and tell them apart: **orange = chamfer** (flat), **blue = bevel / fillet** (curved). The
 table of widths, lengths, turn angles and radii is written to a text datablock, and every face gets a `qf_band`
 attribute. It is a preview: the *Use Surface Analysis* option of the remesh (on with the **Hard Surface** button) keeps the borders of every surface and both sides of chamfers and bevels wide enough for the quads to follow, so the quad rows follow the real limits of the walls. Compare the result with it on and off; about 2 % of the faces can stay triangles.

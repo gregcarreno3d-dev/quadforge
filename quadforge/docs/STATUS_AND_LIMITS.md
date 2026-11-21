@@ -328,3 +328,22 @@ still shows dense, slanted rows on the rims at fixed angles around each hole. Th
 sizing: the grid is locked to the symmetry plane and the outer rim, and the engine cannot also run rows around the circular
 hole rim without leaving a defect there. The fix has to constrain the cross field (and the grid) along circular rim
 loops, in `engine-rs`; the default has not been changed yet because the sweep above is one part.
+
+## 0.18.4: majority filter on the surface classification
+
+Where: `core/surfaces.py::smooth_face_surface`, called from `core/pipeline.py` (`_mark_hard_edges_and_zones`), setting `smooth_surface_borders`. Hypothesis: the stair-stepped classification along chamfer and bevel borders makes jagged feature lines.
+
+Measured at 30K quads, no symmetry (`tools/cad_battery.py`, `tools/zone_report.py`, sharp-chain deviation):
+
+| Part | Filter | Flaws | Stretched | Chain vertices off the line by more than 0.15 mm |
+|---|---|---|---|---|
+| Cylinder_Ver-03 | off | 1.15 % | 203 | 69 |
+| Cylinder_Ver-03 | 2 passes | 0.21 % | 31 | 29 |
+| Cylinder_Ver-03 | 1 pass | 0.33 % | 63 | 27 |
+| Test_Object_Ver-04 | off | 0.09 % | 37 | 6 |
+| Test_Object_Ver-04 | 2 passes | 0.11 % | 77 | 38 |
+| Test_Object_Ver-04 | 1 pass | no result in 400 s (not investigated) | | |
+
+Reading: a clear gain on the disc, a small loss on Test_Object_Ver-04 (the chamfer zone went from 10 to 42 flawed faces in the zone report). Not proven on the rest of the corpus (each run takes about 3 minutes in the cloud). Next: run the 8 real and 20 synthetic parts with and without the filter and decide the default from the whole table.
+
+A variant that protects the open ends of one-face strips (flip a face with one own neighbour only if that neighbour is weakly attached too) gave exactly the "filter off" numbers on both parts: the gain comes from the faces next to strip ends and notches, so the plain rule stays. Unit tests: `quadforge/tests/test_surface_smooth.py`.
