@@ -21,6 +21,8 @@ ZONE_ATTRIBUTE = "quadforge_zone"     # per-face integer: which isolated zone a 
 BAD_QUAD_SINE = 0.55        # a quad whose sharpest corner has a smaller sine (about 33 degrees off square) is relaxed
 RELAX_BAD_STRENGTH = 0.6
 RELAX_BAD_MAX_MOVE_EDGES = 1.0   # a vertex moves at most one local edge length per pass
+STRETCH_LIMIT = 4.0         # a quad whose longest edge is more than this many times its shortest is relaxed too (the add-on counts 5 as a flaw)
+STRETCH_RINGS = 2           # rows of vertices around a stretched quad that move with it, so the pinch is spread out
 
 
 def quad_corner_sines(arrays) -> tuple[np.ndarray, np.ndarray]:
@@ -40,6 +42,17 @@ def quad_corner_sines(arrays) -> tuple[np.ndarray, np.ndarray]:
     return quads, worst
 
 
+def quad_stretch(arrays) -> np.ndarray:
+    """Longest edge over shortest edge of every quad (same order as ``quad_corner_sines``)."""
+    quads = np.flatnonzero(arrays.poly_sizes == 4)
+    if quads.size == 0:
+        return np.zeros(0)
+    loops = arrays.poly_offsets[quads][:, None] + np.arange(4)[None, :]
+    points = arrays.co[arrays.loop_verts[loops]].astype(np.float64)
+    lengths = np.stack([np.linalg.norm(points[:, (k + 1) % 4] - points[:, k], axis=1) for k in range(4)], axis=1)
+    return lengths.max(axis=1) / np.maximum(lengths.min(axis=1), 1e-30)
+
+
 def relax_bad_quads(mesh, surface_tree, sharp_angle_degrees, passes: int) -> int:
     """Even out only the badly shaped quads and put the moved vertices back on the original surface.
 
@@ -52,7 +65,9 @@ def relax_bad_quads(mesh, surface_tree, sharp_angle_degrees, passes: int) -> int
     for _ in range(max(0, passes)):
         arrays = mio.read_mesh_arrays(mesh)
         quads, sines = quad_corner_sines(arrays)
-        bad = quads[sines < BAD_QUAD_SINE]
+        stretch = quad_stretch(arrays)
+        is_bad = (sines < BAD_QUAD_SINE) | (stretch > STRETCH_LIMIT)
+        bad = quads[is_bad]
         left = int(bad.size)
         if bad.size == 0:
             break
@@ -62,6 +77,17 @@ def relax_bad_quads(mesh, surface_tree, sharp_angle_degrees, passes: int) -> int
         in_bad = np.zeros(arrays.n_verts, dtype=bool)
         loops = arrays.poly_offsets[bad][:, None] + np.arange(4)[None, :]
         in_bad[arrays.loop_verts[loops].reshape(-1)] = True
+        stretched = quads[stretch > STRETCH_LIMIT]
+        if stretched.size and STRETCH_RINGS > 0:
+            # a pinched row cannot open if only its own vertices move: let the rows around it share the change
+            in_stretch = np.zeros(arrays.n_verts, dtype=bool)
+            in_stretch[arrays.loop_verts[(arrays.poly_offsets[stretched][:, None] + np.arange(4)[None, :]).reshape(-1)]] = True
+            for _ in range(STRETCH_RINGS):
+                grown = in_stretch.copy()
+                grown[arrays.edges[in_stretch[arrays.edges[:, 0]], 1]] = True
+                grown[arrays.edges[in_stretch[arrays.edges[:, 1]], 0]] = True
+                in_stretch = grown
+            in_bad |= in_stretch
         free = in_bad & ~fixed
         if not free.any():
             break
@@ -82,7 +108,9 @@ def relax_bad_quads(mesh, surface_tree, sharp_angle_degrees, passes: int) -> int
         trial = geo.MeshArrays(co=after, edges=arrays.edges, poly_offsets=arrays.poly_offsets,
                                loop_verts=arrays.loop_verts, loop_edges=arrays.loop_edges)
         _, new_sines = quad_corner_sines(trial)
-        worse = quads[(new_sines < sines - 0.05) | (new_sines < 0.15)]
+        new_stretch = quad_stretch(trial)
+        worse = quads[(new_sines < sines - 0.05) | (new_sines < 0.15)
+                      | ((new_stretch > STRETCH_LIMIT) & (new_stretch > stretch + 0.5))]
         if worse.size:
             loops = arrays.poly_offsets[worse][:, None] + np.arange(4)[None, :]
             revert = np.unique(arrays.loop_verts[loops].reshape(-1))

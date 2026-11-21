@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.18.2
+- **Stretched quads are relaxed (Hard Surface, quads).** The relaxation that already evened out squeezed corners now also treats quads whose longest edge is more than 4 times the shortest (the thin rows along hole rims, bevels and band edges), and moves the two rows of vertices around them too so the pinch spreads out instead of only shifting. Vertices on hard edges and on the symmetry cut stay, every move is put back on the source surface, and a move that makes a neighbouring quad worse is undone. Passes: 4 to 10.
+- Measured on the 8 real parts at 30K quads (no symmetry): stretched quads 780 to 451 (-42 %); the four-hole disc 473 to 203; at 120K with symmetry X, 108 to 84. All 8 real parts and all 20 synthetic parts pass at 30K (the flange, a failing case in 0.17.0, passes with 1.98 % flaws). Deviation from the source is unchanged (at most 0.056 % of the diagonal).
+- Known limits: triangles isolated among quads (about 50 on the disc at 120K) are not touched; what still stretches sits between two hard-edge lines, which cannot move. The cause is in the grid step of the engine (planned, see `STATUS_AND_LIMITS.md`).
+- Tools: `tools/zone_report.py` splits the flaws of a result by zone (flat, chamfer, bevel, near the symmetry seam). `tools/cad_battery.py`: the deviation measurement no longer hangs on STL parts that are already triangles.
+- Tests: `tests/blender_relax_test.py` (new); `tests/row_fit_test.py` brought in line with the 1.0 limit of 0.18.1.
+
 ## 0.18.1
 - **Fixed (Hard Surface, CAD parts with large n-gons): torn rims around holes.** A modelled part has big n-gons (5 to 60 sides) around holes and rims, often concave. The engine cut every n-gon as a fan from its first vertex, which overlaps and flips triangles on a concave one: the rims of the holes of the 4-hole test disc came out ragged and up to 2 mm off the surface (0.75 % of the diagonal). Now the working copy's n-gons are cut with ear clipping (`pipeline._triangulate_ngons`) and the engine does the same (`repair.rs: triangulate_ngon`, with unit tests), so any caller gets a valid triangulation. The disc at 120K with symmetry X: 108 stretched quads instead of 918, deviation 0.016 % instead of 0.75 %, 118,367 faces.
 - **Stretched quads count as flaws.** A quad whose longest edge is more than 5 times the shortest (the dense rows piled along a narrow chamfer or a hole rim) is now counted with the triangles and squeezed corners: it drives the local-flaw warning and the choice between attempts.

@@ -116,7 +116,9 @@ def max_deviation(source_mesh, result_mesh):
     # triangulate the way Blender does (ear clipping): a fan over a large concave n-gon would cover the wrong area
     bm = bmesh.new()
     bm.from_mesh(source_mesh)
-    bmesh.ops.triangulate(bm, faces=bm.faces[:])
+    big = [face for face in bm.faces if len(face.verts) > 3]   # a triangle needs no cutting (and an STL has only triangles)
+    if big:
+        bmesh.ops.triangulate(bm, faces=big)
     tree = BVHTree.FromBMesh(bm)
     bm.free()
     worst = 0.0
