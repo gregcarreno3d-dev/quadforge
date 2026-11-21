@@ -72,6 +72,50 @@ def face_kind_codes(face_surface: np.ndarray, surfaces: list) -> np.ndarray:
     return codes[face_surface + 1]
 
 
+def smooth_face_surface(arrays, face_surface: np.ndarray, rounds: int = 2) -> np.ndarray:
+    """Majority filter: a face whose neighbours mostly belong to one other surface joins that surface.
+
+    The classification of a triangulated source is stair-stepped along the borders of chamfers and bevels (single
+    faces on the wrong side); the feature lines made from those borders inherit the steps. Strips one face wide keep
+    their faces (they have two neighbours of their own surface).
+    """
+    first, second, counts = geo.edge_face_pairs(arrays)
+    two = np.flatnonzero(counts == 2)
+    out = face_surface.copy()
+    if not two.size:
+        return out
+    fa, fb = first[two], second[two]
+    for _ in range(rounds):
+        neigh: list[list[int]] = [[] for _ in range(len(out))]
+        for a, b in zip(fa.tolist(), fb.tolist()):
+            neigh[a].append(b)
+            neigh[b].append(a)
+        changed = 0
+        new = out.copy()
+        for f in range(len(out)):
+            mine = out[f]
+            if mine < 0:
+                continue
+            ids = [int(out[g]) for g in neigh[f]]
+            same = ids.count(int(mine))
+            if same >= 2:
+                continue
+            others = {}
+            for i in ids:
+                if i >= 0 and i != mine:
+                    others[i] = others.get(i, 0) + 1
+            if not others:
+                continue
+            best = max(others, key=others.get)
+            if others[best] >= 2 and others[best] > same:
+                new[f] = best
+                changed += 1
+        out = new
+        if not changed:
+            break
+    return out
+
+
 def border_edge_codes(arrays, face_surface: np.ndarray, borders: list, surfaces: list | None = None,
                       bands: list | None = None, min_band_width: float = 0.0) -> np.ndarray:
     """Per edge: 0 = inside a surface, 1 sharp, 2 tangent, 3 band border.

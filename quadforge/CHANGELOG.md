@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.18.4
+- **Straighter feature lines along chamfers and bevels (Hard Surface with Analyze Surfaces).** The classification of a triangulated source is stair-stepped along the borders of chamfers and bevels (single faces on the wrong side), and the feature lines made from those borders inherited the steps. A majority filter (`surfaces.smooth_face_surface`, two passes, setting `smooth_surface_borders`) now moves a face to the neighbouring surface that holds most of its neighbours. Strips one face wide are kept.
+- Measured at 30K quads, no symmetry: four-hole disc (Cylinder_Ver-03) flaws 1.15 % to 0.21 %, stretched quads 203 to 31, sharp-chain deviation above 0.15 mm 69 to 29 vertices. **Mixed result:** on Test_Object_Ver-04 flaws went from 0.09 % to 0.11 % (battery) and the sharp-chain deviation above 0.15 mm from 6 to 38 vertices, so the filter is a net gain on the disc and not proven elsewhere. `tools/cad_battery.py --no-smooth` switches it off to compare.
+- Not fixed yet (seen in the 0.18.3 screenshots): triangle fans at hole rims, bore clusters with symmetry X (0 triangles without symmetry), distortion near the central boss window of the plate. They need the grid step of the engine (see `STATUS_AND_LIMITS.md`).
+- **After installing, quit Blender completely and open it again.**
+
 ## 0.18.3
 - **Fixed: the panel could show the new version while the old code ran.** Blender keeps the sub-modules of an add-on in memory when a new version is installed over the old one without restarting, so the panel header (read from the manifest) said 0.18.2 while the 0.18.1 remesh code still produced the results. The add-on now drops its cached sub-modules when it is imported, and the panel shows a red "Old code X is still loaded. Restart Blender" box if the loaded code and the installed version ever differ (new `core/version.py`; `tests/blender_reload_test.py`).
 - Cleanup: unused imports and variables removed from `guidance.py` and `operators.py`; a static check of the whole Python code (pyflakes) shows only Blender's annotation syntax.
