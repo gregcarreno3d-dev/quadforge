@@ -26,6 +26,7 @@ import bpy
 from bpy.app.translations import pgettext_iface as translate
 
 from . import guidance, operators, planning, texts
+from .core import version as core_version
 from .presets import HEAVY_TARGET, PRESETS, SURFACE_PROFILES, TARGET_CHOICES, format_target
 
 # Icon used for each level of advice.
@@ -132,6 +133,7 @@ def _read_version() -> str:
 
 
 ADDON_VERSION = _read_version()
+LOADED_CODE_VERSION = core_version.CODE_VERSION
 
 
 class _QuadForgePanel:
@@ -166,6 +168,12 @@ class QUADFORGE_PT_main(_QuadForgePanel, bpy.types.Panel):
         layout = self.layout
         _prepare_layout(layout)
         settings = context.scene.quadforge
+
+        if LOADED_CODE_VERSION != ADDON_VERSION:
+            box = layout.box()
+            box.alert = True
+            box.label(text=f"Old code {LOADED_CODE_VERSION} is still loaded.", icon="ERROR")
+            box.label(text=f"Restart Blender to run {ADDON_VERSION}.")
 
         messages = guidance.build_guidance(
             guidance.snapshot_from_object(context.active_object), _guidance_options(settings))

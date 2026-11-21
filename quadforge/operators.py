@@ -90,7 +90,6 @@ class QUADFORGE_OT_remesh(bpy.types.Operator):
         """Panel button: ask first on very dense meshes, then run the cancellable (modal) version."""
         self.interactive = True
         snapshot = guidance.snapshot_from_object(context.active_object)
-        scene_settings = context.scene.quadforge
         if not guidance.needs_confirmation(snapshot.face_count):
             return self.execute(context)
         window_manager = context.window_manager
@@ -417,7 +416,7 @@ bevels, and list the borders between them"""
         return active is not None and active.type == "MESH"
 
     def execute(self, context):
-        from .core import bands as bands_core, geometry as geo, mesh_io as mio_, surfaces as surf
+        from .core import bands as bands_core, mesh_io as mio_, surfaces as surf
         obj = context.active_object
         mesh = obj.data
         if obj.mode == "EDIT":

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from . import planning, texts
+from . import texts
 
 # Message levels (ERROR blocks the Remesh button; the others are only advice).
 ERROR = "ERROR"

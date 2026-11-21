@@ -21,9 +21,17 @@ Map of the package (read in this order to understand it):
         backends/       remesh engines behind one interface (FORGE, the own engine)
         pipeline.py     the remesh recipe: stages from "read mesh" to "result objects"
 """
-import bpy
+import sys
 
-from . import translations
+# Blender can keep the sub-modules of an older copy of this add-on in memory when a new version is installed over it
+# (the package module is re-imported, its sub-modules are not). Drop them so that the code that runs is the code that
+# was installed. When this line runs the package is being imported fresh, so anything cached below it is stale.
+for _stale in [_name for _name in sys.modules if _name.startswith(__name__ + ".")]:
+    del sys.modules[_stale]
+
+import bpy  # noqa: E402
+
+from . import translations  # noqa: E402
 from .operators import (
     QUADFORGE_OT_apply_preset,
     QUADFORGE_OT_clear_guides,

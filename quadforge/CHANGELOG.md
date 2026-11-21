@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.18.3
+- **Fixed: the panel could show the new version while the old code ran.** Blender keeps the sub-modules of an add-on in memory when a new version is installed over the old one without restarting, so the panel header (read from the manifest) said 0.18.2 while the 0.18.1 remesh code still produced the results. The add-on now drops its cached sub-modules when it is imported, and the panel shows a red "Old code X is still loaded. Restart Blender" box if the loaded code and the installed version ever differ (new `core/version.py`; `tests/blender_reload_test.py`).
+- Cleanup: unused imports and variables removed from `guidance.py` and `operators.py`; a static check of the whole Python code (pyflakes) shows only Blender's annotation syntax.
+- Remesh results are the same as in 0.18.2 (relaxation of stretched quads).
+- Documented: symmetry X against no symmetry at 120K (seam triangles) in `STATUS_AND_LIMITS.md`.
+- **After installing, quit Blender completely and open it again.**
+
 ## 0.18.2
 - **Stretched quads are relaxed (Hard Surface, quads).** The relaxation that already evened out squeezed corners now also treats quads whose longest edge is more than 4 times the shortest (the thin rows along hole rims, bevels and band edges), and moves the two rows of vertices around them too so the pinch spreads out instead of only shifting. Vertices on hard edges and on the symmetry cut stay, every move is put back on the source surface, and a move that makes a neighbouring quad worse is undone. Passes: 4 to 10.
 - Measured on the 8 real parts at 30K quads (no symmetry): stretched quads 780 to 451 (-42 %); the four-hole disc 473 to 203; at 120K with symmetry X, 108 to 84. All 8 real parts and all 20 synthetic parts pass at 30K (the flange, a failing case in 0.17.0, passes with 1.98 % flaws). Deviation from the source is unchanged (at most 0.056 % of the diagonal).
