@@ -546,3 +546,4 @@ class QUADFORGE_PT_advanced(_QuadForgePanel, bpy.types.Panel):
         layout.prop(settings, "transfer_zones")
         layout.separator()
         layout.operator("quadforge.reset_settings", icon="LOOP_BACK")
+        layout.operator("quadforge.save_debug_bundle", icon="EXPORT")

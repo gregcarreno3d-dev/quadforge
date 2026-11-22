@@ -7,10 +7,11 @@ import bpy
 import numpy as np
 from bpy.props import BoolProperty, StringProperty
 
-from . import guidance, texts
+from . import debug_bundle, guidance, texts
 from . import properties as properties_module
 from .core import mesh_io as mio
 from .core import pipeline
+from .core import version as core_version
 from .presets import PRESETS
 
 BYTES_PER_GB_IN_MB = 1024.0
@@ -739,4 +740,36 @@ class QUADFORGE_OT_reset_settings(bpy.types.Operator):
             if prop.identifier in {"rna_type", "name"} or prop.identifier.startswith("last_"):
                 continue
             settings.property_unset(prop.identifier)
+        return {"FINISHED"}
+
+
+class QUADFORGE_OT_save_debug_bundle(bpy.types.Operator):
+    """Save a zip with the selected meshes, the settings and the last report, to send to the developer"""
+    bl_idname = "quadforge.save_debug_bundle"
+    bl_label = "Save Debug Bundle"
+    bl_options = {"INTERNAL"}
+
+    filepath: StringProperty(subtype="FILE_PATH", default="quadforge_debug.zip")
+    filter_glob: StringProperty(default="*.zip", options={"HIDDEN"})
+
+    def invoke(self, context, event):
+        if not self.filepath.endswith(".zip"):
+            self.filepath = "quadforge_debug.zip"
+        context.window_manager.fileselect_add(self)
+        return {"RUNNING_MODAL"}
+
+    def execute(self, context):
+        from .core.backends import forge
+
+        try:
+            engine = forge.find_engine()
+        except Exception:  # noqa: BLE001 - the bundle is still useful without the engine path
+            engine = None
+        path = bpy.path.abspath(self.filepath)
+        try:
+            names = debug_bundle.write_bundle(context, path, core_version.CODE_VERSION, str(engine) if engine else None)
+        except Exception as exc:  # noqa: BLE001
+            self.report({"ERROR"}, f"Could not write the bundle: {exc}")
+            return {"CANCELLED"}
+        self.report({"INFO"}, f"Saved {path} ({len(names)} mesh objects)")
         return {"FINISHED"}

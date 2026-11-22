@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.18.6
+- **Save Debug Bundle** (Advanced panel): one zip with the selected meshes (and the matching `_quads` result), the settings, the last report, versions, platform, CPU count and the engine hash (`quadforge/debug_bundle.py`, operator `quadforge.save_debug_bundle`). `python3 tools/replay_bundle.py BUNDLE.zip` replays the run on another computer and prints both results. After installing, quit Blender completely and open it again. Reason: the four-hole disc at 120K with symmetry X gives 8 triangles in the cloud and 72 in Blender 5.3 with identical input and defaults.
+
 ## 0.18.5
 - **Engine (Rust): two marked lines closer than 3 cells now count as one.** The two edges of a narrow chamfer or hole-rim bevel (about 0.4 cell apart on the four-hole disc) cannot both be rows of the lattice, and landed on neighbouring rows as very thin quads that the Python finishing then collapsed into triangles. `FORGE_THINFEAT` default raised from 0.75 to 3 cells (`engine-rs/src/pipeline.rs`, `long_feature_chains`; `0` disables).
 - Measured on the 8 real parts at 30K, no symmetry, deviation unchanged: stretched quads 674 to 357 in total (Cylinder_Ver-01 362 to 63, Test_Object_Ver-01 171 to 109), mean flaws 0.30 % to 0.20 %. **Not better everywhere:** Cylinder_Ver-03 went from 31 to 89 stretched quads (0.21 % to 0.54 % flaws); at 1.5 cells the total was worse (927). Engine tests 29/29.

@@ -1,6 +1,6 @@
 # QuadForge: architecture and behaviour, written for AI assistants
 
-Version described: **0.18.5** (FORGE engine in Rust since 0.15.0; chamfer/bevel detector since 0.15.1; whole-model surface analysis since 0.16.0). Licence: GPL-3.0-or-later. Everything here was checked against the code in this
+Version described: **0.18.6** (FORGE engine in Rust since 0.15.0; chamfer/bevel detector since 0.15.1; whole-model surface analysis since 0.16.0). Licence: GPL-3.0-or-later. Everything here was checked against the code in this
 repository. If this file and the code disagree, **the code wins**; please fix this file.
 
 This document is meant to be loaded whole into a model's context. It is dense and flat on purpose: sections are
@@ -31,6 +31,7 @@ quadforge/                    the add-on (this folder is what Blender installs)
                               _advanced. `_shows(context, kind)` hides the other surface type's sections unless the surface
                               button is unmarked (custom) or `show_all_options` is on; `_help()` draws help text only when
                               `show_help` is on (both are scene properties)
+  debug_bundle.py             zip with meshes + settings + report for reproducing a user run (button in Advanced; tools/replay_bundle.py reads it)
   operators.py                quadforge.remesh, quadforge.remesh_modal (Esc cancels), quadforge.preview (about 3,000 faces, tagged
                               `quadforge_preview_of`, removed by the next full remesh), refresh_zones, mark_guides, clear_guides,
                               apply_preset, set_surface, set_target, reset_settings
@@ -62,7 +63,7 @@ quadforge/                    the add-on (this folder is what Blender installs)
   docs/                       user guide, decisions, status and limits, benchmark protocol
 engine-rs/src/                FORGE engine source (Rust; see engine-rs/README.md for the work-area map)
 engine/src/                   original C++17 engine (used until 0.14; reference, not shipped)
-tools/                        build.py (Zig cross-compiler), package.py, make_delivery.py, quality_metrics.py, cad_battery.py, zone_report.py, plot_topology.py, organic_battery.py,
+tools/                        build.py (Zig cross-compiler), package.py, make_delivery.py, quality_metrics.py, cad_battery.py, replay_bundle.py, zone_report.py, plot_topology.py, organic_battery.py,
                               meshgen.py (synthetic meshes), fmesh.py, stlio.py, harness.py
 tests/                        early engine tests t01..t05
 docs/                         this documentation (technical report, this file, images/)

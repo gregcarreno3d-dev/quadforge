@@ -163,6 +163,7 @@ SPANISH_INTERFACE = {
     "Detail Ratio": "Proporción de detalle",
     "FORGE (QuadForge)": "FORGE (QuadForge)",
     "Reset Settings": "Restablecer ajustes",
+    "Save Debug Bundle": "Guardar paquete de depuración",
     "Apply Preset": "Aplicar preset",
     "materials": "materiales",
     "face sets": "face sets",

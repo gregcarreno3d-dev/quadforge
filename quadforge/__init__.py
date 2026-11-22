@@ -46,6 +46,7 @@ from .operators import (
     QUADFORGE_OT_remesh,
     QUADFORGE_OT_remesh_modal,
     QUADFORGE_OT_reset_settings,
+    QUADFORGE_OT_save_debug_bundle,
     QUADFORGE_OT_set_surface,
     QUADFORGE_OT_set_target,
 )
@@ -81,6 +82,7 @@ _CLASSES = (
     QUADFORGE_OT_select_surface_kind,
     QUADFORGE_OT_apply_preset,
     QUADFORGE_OT_reset_settings,
+    QUADFORGE_OT_save_debug_bundle,
     QUADFORGE_OT_set_surface,
     QUADFORGE_OT_set_target,
     QUADFORGE_OT_mark_guides,
