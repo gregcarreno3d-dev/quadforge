@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased (next: 0.18.7)
+
+- **Analyze Surfaces regularization** (`core/regularize.py`, new): the classification is tidied after the engine: small curved fragments (a dome split into cylinder / sphere / freeform patches) join the neighbour they share the longest smooth border with; a majority filter straightens stair-stepped borders (planes never move, no face crosses a crease of 20 degrees or more); the border list and triangle counts are rebuilt so colours, selection and feature lines agree. Test_Object_Ver-04: 90 regions (39 of 10 faces or fewer) become 38 (10 small). Limit: large mis-typed patches (a big cylinder patch inside a dome) stay; they need a better fit in the engine.
+- The remesh uses it too (`smooth_surface_borders`, default on); battery on Ver-04 unchanged (PASS, same counts).
+- Tools: `tools/plot_surfaces.py` renders the classification by kind colour (`--no-regularize` compares). Tests: `test_regularize.py`.
+
 ## 0.18.6
 - **Save Debug Bundle** (Advanced panel): one zip with the selected meshes (and the matching `_quads` result), the settings, the last report, versions, platform, CPU count and the engine hash (`quadforge/debug_bundle.py`, operator `quadforge.save_debug_bundle`). `python3 tools/replay_bundle.py BUNDLE.zip` replays the run on another computer and prints both results. After installing, quit Blender completely and open it again. Reason: the four-hole disc at 120K with symmetry X gives 8 triangles in the cloud and 72 in Blender 5.3 with identical input and defaults.
 

@@ -264,7 +264,7 @@ merge valence-2 dead ends (≤ 6 rounds), `improveQuads(..., 40 sweeps, threshol
 
 ### 4.2 Surface analysis (0.16)
 
-See `quadforge/docs/SURFACE_ANALYSIS.md`. `forge surfaces --in X.fmesh [--json OUT]` prints `SF <json>`; python: `core/surfaces.py::analyze_arrays`, operators `quadforge.analyze_surfaces`, `select_borders`, `select_surface_kind`; attributes `qf_surface`, `qf_surface_kind`, `qf_border`. In `core/pipeline.py` (`_mark_hard_edges_and_zones`) `settings.use_surface_analysis` adds sharp borders (and band sides when `surface_band_sides`) to the geometric hard edges, after `surfaces.smooth_face_surface` (majority filter, setting `smooth_surface_borders`, default on; `tools/cad_battery.py --no-smooth` turns it off to compare); failures only add a warning.
+See `quadforge/docs/SURFACE_ANALYSIS.md`. `forge surfaces --in X.fmesh [--json OUT]` prints `SF <json>`; python: `core/surfaces.py::analyze_arrays`, operators `quadforge.analyze_surfaces`, `select_borders`, `select_surface_kind`; attributes `qf_surface`, `qf_surface_kind`, `qf_border`. In `core/pipeline.py` (`_mark_hard_edges_and_zones`) `settings.use_surface_analysis` adds sharp borders (and band sides when `surface_band_sides`) to the geometric hard edges, after `core/regularize.py` (called by `analyze_arrays(regularize=True)`: fragment merge + majority filter + border rebuild, setting `smooth_surface_borders`, default on; `tools/cad_battery.py --no-smooth` turns it off to compare); failures only add a warning.
 
 ### 4.3 Chamfer and bevel detector (`forge bands`, `stages/bands.rs`)
 

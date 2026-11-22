@@ -40,8 +40,12 @@ class SurfaceError(RuntimeError):
     pass
 
 
-def analyze_arrays(co: np.ndarray, sizes: np.ndarray, idx: np.ndarray, max_width_units: float = 0.0, sharp: float = 25.0):
-    """Run the engine on raw arrays. Returns ``(face_surface ndarray, report dict)``."""
+def analyze_arrays(co: np.ndarray, sizes: np.ndarray, idx: np.ndarray, max_width_units: float = 0.0, sharp: float = 25.0,
+                   regularize: bool = False):
+    """Run the engine on raw arrays. Returns ``(face_surface ndarray, report dict)``.
+
+    ``regularize`` merges stray fragments and straightens borders (see ``regularize.py``) so every real face is one region.
+    """
     engine = backend.find_engine()
     with tempfile.TemporaryDirectory(prefix="quadforge_surf_") as tmp:
         src, out = Path(tmp) / "in.fmesh", Path(tmp) / "surfaces.json"
@@ -54,16 +58,20 @@ def analyze_arrays(co: np.ndarray, sizes: np.ndarray, idx: np.ndarray, max_width
         if done.returncode != 0 or not out.is_file():
             raise SurfaceError((done.stdout + done.stderr).strip() or "the engine did not answer (older engine without surface analysis?)")
         report = json.loads(out.read_text())
-    return np.array(report["face_surface"], dtype=np.int32), report
+    labels = np.array(report["face_surface"], dtype=np.int32)
+    if regularize:
+        from . import regularize as tidy
+        labels, report = tidy.regularize(co, sizes, idx, labels, report)
+    return labels, report
 
 
-def analyze(obj, max_width_units: float = 0.0, sharp: float = 25.0):
+def analyze(obj, max_width_units: float = 0.0, sharp: float = 25.0, regularize: bool = True):
     """Analyse a mesh object (object scale applied). Returns ``(face_surface, report)``."""
     from . import mesh_io
     arrays = mesh_io.read_mesh_arrays(obj.data)
     scale = np.array(obj.matrix_world.to_scale(), dtype=np.float32)
     sizes = np.diff(arrays.poly_offsets).astype(np.int32)
-    return analyze_arrays(arrays.co * scale, sizes, arrays.loop_verts.astype(np.int32), max_width_units, sharp)
+    return analyze_arrays(arrays.co * scale, sizes, arrays.loop_verts.astype(np.int32), max_width_units, sharp, regularize)
 
 
 def face_kind_codes(face_surface: np.ndarray, surfaces: list) -> np.ndarray:

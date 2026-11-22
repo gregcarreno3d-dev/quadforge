@@ -57,6 +57,7 @@ core/             the "engine room"
   detail.py         sculpt fitting, corner snapping, polish, face data
   bands.py          chamfer / bevel detector client (engine command `forge bands`)
   surfaces.py       whole-model surface analysis client (engine command `forge surfaces`)
+  regularize.py     tidies the surface labels (merge fragments, straighten borders, rebuild borders)
   profiling.py      time and memory
   backends/         the engine behind a single interface (FORGE)
   pipeline.py       the remeshing recipe (starts at the run() function)
