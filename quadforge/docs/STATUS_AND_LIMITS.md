@@ -2,12 +2,13 @@
 
 See `EXPERIMENT_LOG.md` for the short list of what was tried, kept and rejected.
 
-## Current status (0.18.6)
+## Current status (0.18.7)
 - **Surface analysis and chamfer/bevel detection (preview).** Tested on real CAD parts (a cylinder plate, a perforated plate, a flange, a spool-like part) and on synthetic parts (prisms, frustums, a tilted frustum, a UV sphere, a bracket with a tilted hole, a six-hole flange, a dome, a cone on a cylinder, an off-centre boss). Unit tests live in `engine-rs/src/stages/surfaces.rs`; the Blender test is `tests/blender_surfaces_test.py`.
 - **Known limits of the analysis:** surfaces of revolution are searched only about the X, Y and Z axes through the centre of the model; fillets made of very thin facets and coarse 3-facet fillets are only partly detected; with *Use Surface Analysis* about 2 % of the faces can stay triangles (isolated ones in the quad flow); the detector is in the Linux engine checked into the repository, and in Windows / macOS builds made by CI.
 - **Speed on CAD parts:** a plate with a strong size variation falls back after the second attempt (about 12 s instead of 26 s at 4K quads).
 
 ## Tested
+- 0.18.7: unit tests (regularize, surface smooth, geometry) and the Blender surfaces, surface and bundle suites pass; Test Object Ver-04 at 6K passes the battery with and without the regularization (same counts); surface regions on Ver-04 90 -> 38 (small ones 39 -> 10); Cylinder Ver-03 and the gear (Ver-05) unchanged and correct
 - 0.18.6: ui, reload, bundle, relax, ngon, hard, integration (26 of 26), surfaces, zones, guides, head pass; an operator remesh on Test Object Ver-04 at 30K calls the relaxation
 - 0.18.2: all Blender and Python suites pass (hard, integration 26 of 26, surfaces, bevel, forge, form_detail, zone_detail, zones, guides, head, preview, subdiv, uv, vgzones, surface, ui, ngon, relax, row_fit; matrix quick set 23 of 23); CAD battery at 30K, no symmetry: 8 of 8 real parts and 20 of 20 synthetic parts
 - 0.18.1: all Blender and Python suites pass (hard, integration, surfaces, bevel, forge, form_detail, zone_detail, zones, guides, head, preview, subdiv, uv, vgzones, surface, ui, ngon, row_fit; matrix quick set 23 of 23), engine tests 7 of 7, battery on the 20 synthetic parts at 30K (26 of 26 with the real parts) and on the eight polygon parts at 30K (8 of 8).

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (next: 0.18.7)
+## 0.18.7
 
 - **Analyze Surfaces regularization** (`core/regularize.py`, new): the classification is tidied after the engine: small curved fragments (a dome split into cylinder / sphere / freeform patches) join the neighbour they share the longest smooth border with; a majority filter straightens stair-stepped borders (planes never move, no face crosses a crease of 20 degrees or more); the border list and triangle counts are rebuilt so colours, selection and feature lines agree. Test_Object_Ver-04: 90 regions (39 of 10 faces or fewer) become 38 (10 small). Limit: large mis-typed patches (a big cylinder patch inside a dome) stay; they need a better fit in the engine.
 - The remesh uses it too (`smooth_surface_borders`, default on); battery on Ver-04 unchanged (PASS, same counts).

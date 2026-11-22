@@ -1,6 +1,6 @@
 # QuadForge
 
-A Blender add-on for fast quad and triangle remeshing, powered by **FORGE**, its own engine written in Rust. Version **0.18.6**.
+A Blender add-on for fast quad and triangle remeshing, powered by **FORGE**, its own engine written in Rust. Version **0.18.7**.
 It handles organic sculpts and, in preview, CAD / STL parts (3D printing, mechanical): it can split a whole model into surfaces and keep chamfers, bevels and borders.
 
 ![CAD parts with QuadForge 0.16.3. Top: surface analysis (planes grey, cylinders green, spheres purple, revolution teal, chamfers orange, bevels blue). Bottom: the Hard Surface remesh of the same parts at about 4K quads, with surface analysis on](docs/images/cad_0.16.jpg)
@@ -17,7 +17,7 @@ It handles organic sculpts and, in preview, CAD / STL parts (3D printing, mechan
 
 ![The same disc from the side: rows follow the concave band; the top edge of the band still shows a slight sawtooth](docs/images/hard-surface/disc-0.18.1-side.jpg)
 
-![Hard Surface, version 0.18.4 against 0.18.3: the four-hole disc at 30K quads, no symmetry, top view, triangles in red. 50 triangles (0.18.3) against 8 (0.18.6) after the surface classification is smoothed along chamfers and bevels. Made with tools/plot_topology.py](docs/images/hard-surface/disc-0.18.6-compare.jpg)
+![Hard Surface, version 0.18.4 against 0.18.3: the four-hole disc at 30K quads, no symmetry, top view, triangles in red. 50 triangles (0.18.3) against 8 (0.18.7) after the surface classification is smoothed along chamfers and bevels. Made with tools/plot_topology.py](docs/images/hard-surface/disc-0.18.6-compare.jpg)
 
 ![Hard Surface, version 0.17.0: a CAD plate with a ring and slot remeshed to 120K quads (116,772 faces, 100 % quads, 30 triangles, 202 poles, 23 s, 1,619 hard edges kept)](docs/images/hard-surface/plate-120k-a.jpg)
 
