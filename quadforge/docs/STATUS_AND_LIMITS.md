@@ -17,6 +17,19 @@ See `EXPERIMENT_LOG.md` for the short list of what was tried, kept and rejected.
 - Python backend with the real engine through a simulated mesh.
 - Windows and macOS binaries are built natively by CI and pass the engine tests there; real-machine use is still limited.
 
+## Long-range battery on the symmetric test parts (0.18.7, 2 CPU cores, `tools/corpus_real`)
+
+| Set | Target | Passed |
+|---|---|---|
+| 8 parts, no symmetry | 5K, 20K | 8 of 8 |
+| 8 parts, no symmetry | 1.5K | 4 of 8 |
+| `sym/` (4 parts mirrored in X), symmetry X | 10K, 40K | 4 of 4 |
+| `sym/`, symmetry X | 2.5K | 2 of 4 (Cylinder Ver-01, Test Object Ver-04: 7-10 % untidy faces) |
+
+- Below about 5K faces, parts whose smallest chamfer or pocket is narrower than one cell end with triangles and squeezed quads around it. The panel already warns after the remesh and suggests 1.4x or 2x the quads; on Cylinder Ver-01 and Test Object Ver-04 that suggestion (about 5K) is where both pass.
+- Test Object Ver-04, symmetry X, 3.5K: one vertex on the symmetry plane inside the small pocket ends 0.98 % of the diagonal off the source (limit 0.5 %). One vertex of 3318; not yet traced to a stage (no projection step exists after relax and mirror).
+- Symmetry X on a part that is not mirrored (Cylinder Ver-01 and Test Object Ver-02/05 as first sent) moves the mesh off the surface by design; the panel warns when fewer than 90 % of the sampled points match.
+
 ## Tested inside Blender (5.2.2, `bpy` module, headless)
 - 28 original scenarios + 10 FORGE scenarios (`tests/blender_integration_test.py`, `tests/blender_forge_test.py`): pipeline, symmetry, levels, zones, density vertex group, quads/triangles output, operator, cancel (engine process stops, no leftovers), and installation of the real extension zip.
 - Models by the author: hand (119K tris), bull ant with peg (119K), hard-surface plate (8K, 4 through holes): all produce valid, closed, consistently oriented meshes.
