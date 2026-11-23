@@ -2,6 +2,10 @@
 
 ## Unreleased (next)
 
+- Open work: green tooth on the rounded end of Test Object Ver-04, one-surface fit of rounded ends, Cylinder Ver-03 with symmetry X is slow at 10K, seam triangles of Ver-04 with symmetry X, replay with 10 threads, Windows/macOS validation (see `docs/STATUS_AND_LIMITS.md`).
+
+## 0.18.8 — 2026-11-23
+
 - **The engine gives the same result every time** (`engine-rs/src/det.rs`): the standard hash maps are seeded randomly on each run, so surface analysis (and any stage that walked one) could return different patches for the same model (Test Object Ver-04: the small "revolution" patch appeared and disappeared between runs). All engine code now uses fixed-hasher `HashMap`/`HashSet` from `crate::det`. Checked: 9 parts x 6 runs, one distinct result each; battery 8/8 at 5K and 20K, same counts as before. Use `crate::det`, never `std::collections::HashMap`, in new engine code.
 - **A poor primitive fit is reported as free-form**: a cone, sphere, cylinder or revolution whose fit error is above 0.3 % of the model diagonal (`FIT_ERR_MAX`) shows as free-form. Test Object Ver-04: the yellow "cone" patch where the stem meets the body (a fillet saddle a cone only approximates, error 0.34 %) is now free-form like the rest of the fillet. Every real primitive in the test parts fits better than 0.25 %. Remesh unchanged.
 - **Ragged borders between curved regions are rounded off** (`regularize.smooth_boundaries`): a curved face looks two faces deep and joins the other curved label that holds at least half of its neighbourhood while its own holds at most half (smooth edges only; planes, chamfers and bevels never move). Test Object Ver-04: the sphere patch on the rounded end joins it (sphere 112 -> 108 faces, freeform 1098 -> 1176), the green teeth along its border shrink. Remesh unchanged on 8 parts at 5K and 4 mirrored parts at 10K.
