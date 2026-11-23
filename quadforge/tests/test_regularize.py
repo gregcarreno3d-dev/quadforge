@@ -41,3 +41,22 @@ def test_plane_never_absorbed_and_crease_kept():
     out, merged = R.merge_fragments(topo, labels, kinds)
     out = R.majority_filter(topo, out, kinds)
     assert merged == 0 and (out == labels).all()
+
+
+def test_band_strips_never_grow_and_enclosed_flat_fragment_joins():
+    co, sizes, idx = strip(30)
+    labels = np.zeros(len(sizes), np.int32)
+    labels[:20] = 0                    # a long curved region
+    labels[20:30] = 2                  # a plane wedge fan, enclosed by curved regions only ...
+    labels[30:] = 1                    # ... and a bevel strip beyond
+    kinds = ["cylinder", "bevel", "plane"]
+    topo = R.Topology(co, sizes, idx)
+    out, _ = R.merge_fragments(topo, labels, kinds)
+    out = R.majority_filter(topo, out, kinds)
+    assert (out[30:] == 1).all()                         # the bevel strip did not grow or shrink
+    labels2 = labels.copy()
+    labels2[24:26] = 2
+    labels2[20:24] = 0
+    labels2[26:30] = 0
+    out2, merged = R.merge_fragments(topo, labels2, kinds)
+    assert merged >= 1 and (out2[24:26] == 0).all()      # a 2-face flat sliver inside the curved region joined it

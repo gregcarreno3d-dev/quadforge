@@ -2,6 +2,8 @@
 
 ## Unreleased (next)
 
+- **Fix: the stripes of blue, grey and green in thick rings** (Test Object Ver-04, the ring at the bottom of the counterbore, the "grey stripes inside cylinders" in the 0.18.6 screenshots). They were made by the majority filter introduced in 0.18.4: a fan of long thin wedge triangles next to a thin bevel ring had every other wedge turned into bevel. Now a face joins a chamfer or bevel only when its longest edge is at most 3 band widths (`regularize.can_join_band`), and a small flat fragment that only curved regions surround joins them (`MERGE_FLAT`). Ver-04: bevel faces 401 -> 233 (raw engine 201), regions 90 -> 51, small regions 39 -> 20. The ring is one cylinder wall with a thin bevel ring. Remesh results unchanged on all 8 parts at 5K and 20K and on the 4 mirrored parts at 10K (Cylinder Ver-03 and Ver-01 got worse in an intermediate try that forbade band growth outright, so the rule is size-based).
+
 - **Stray vertices are pulled back to the source** (`detail.pull_stray_vertices`, runs after the bad-quad relax): a vertex more than 0.3 % of the model diagonal off the source surface moves onto it (a vertex on a symmetry plane keeps its plane coordinate); everything else stays as the engine made it. Test Object Ver-04, symmetry X, 3.5K: worst distance 0.97 % -> 0.25 %. Counts and results unchanged on all 8 parts at 5K and on the 4 mirrored parts at 10K.
 - Tools: `cad_battery.py --no-join` / `--no-relax` (experiments). Test: `blender_stray_test.py`. Corpus: `tools/corpus_real/sym/` (mirrored parts).
 
