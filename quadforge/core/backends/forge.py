@@ -92,8 +92,9 @@ def build_command(engine: Path, src: Path, dst: Path, request: RemeshRequest) ->
         command += ["--no-retry"]
     if request.curv_angle > 0 and request.output == "QUADS":
         command += ["--curv-adapt", f"{request.curv_angle:.3f}"]
-    if request.threads > 0:
-        command += ["--threads", str(int(request.threads))]
+    threads = request.threads or int(os.environ.get("QUADFORGE_THREADS", "0") or 0)   # the variable is for tests
+    if threads > 0:
+        command += ["--threads", str(int(threads))]
     return command
 
 

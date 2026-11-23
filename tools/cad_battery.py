@@ -163,6 +163,9 @@ def run_part(bpy, pipeline, path, args):
     result = pipeline.run(bpy.context, obj, settings)
     seconds = time.time() - started
     level = result.levels[0]
+    if os.environ.get("QUADFORGE_PROFILE"):
+        for st in result.profile["stages"]:
+            print("   %-40s %6.1f s" % (st["name"], st["seconds"]), file=sys.stderr)
     stats = level.stats
     mesh = level.object.data
     positions = np.array([v.co[:] for v in mesh.vertices], dtype=np.float64)
@@ -209,8 +212,11 @@ def main():
     parser.add_argument("--no-smooth", action="store_true", help="switch the surface-border majority filter off (experiment)")
     parser.add_argument("--no-join", action="store_true", help="skip the leftover-triangle joining (experiment)")
     parser.add_argument("--no-relax", action="store_true", help="skip relaxing bad quads (experiment)")
+    parser.add_argument("--threads", type=int, default=0, help="engine threads (0 = engine decides); to check results do not depend on it")
     parser.add_argument("--save", help="folder: write every result as a Wavefront OBJ there for inspection")
     args = parser.parse_args()
+    if args.threads:
+        os.environ["QUADFORGE_THREADS"] = str(args.threads)
 
     paths = []
     for item in args.inputs:

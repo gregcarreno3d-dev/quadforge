@@ -29,6 +29,7 @@ from __future__ import annotations
 import dataclasses
 import math
 import os
+import sys
 import time
 from dataclasses import dataclass, field
 from typing import Callable, Optional
@@ -975,10 +976,11 @@ def _tidy_seam(bm, plan: sym.SymmetryPlan, settings) -> None:
     no more open or non-manifold than before (hard-surface and open meshes must never get worse)."""
     def _run(target) -> None:
         _remove_degenerate_geometry(target)
-        if plan.is_active and settings.output == "QUADS":
+        if settings.output == "QUADS":
             for _ in range(3):      # a corner next to another one is left for the next round
-                if not _dissolve_seam_corners(target, plan):
+                if not _dissolve_seam_corners(target, plan if plan.is_active else None):
                     break
+        if plan.is_active and settings.output == "QUADS":
             _merge_seam_triangle_pairs(target, plan)
 
     trial = bm.copy()
@@ -1117,8 +1119,9 @@ def _quad_min_corner_sine(points) -> float:
     return worst
 
 
-def _dissolve_seam_corners(bm, plan: sym.SymmetryPlan) -> int:
-    """A vertex on the symmetry plane whose only edges lie in the plane has valence 2: the two quads around it (a mirror
+def _dissolve_seam_corners(bm, plan: sym.SymmetryPlan | None) -> int:
+    """With ``plan`` None any vertex with only two edges (a pinched corner the engine left between two quads, found where a
+    chamfer is thinner than a cell) is dissolved the same way. A vertex on the symmetry plane whose only edges lie in the plane has valence 2: the two quads around it (a mirror
     pair) share both of its edges and each has a flat 180 degree corner there. It is the half mesh's boundary corner,
     a defect the symmetric field leaves, always next to a valence-6 vertex. Dissolving the vertex merges the pair into one
     well-shaped quad that straddles the plane (a diamond), turning the 2 and 6 into a 3 and a 5. Returns how many."""
@@ -1127,7 +1130,7 @@ def _dissolve_seam_corners(bm, plan: sym.SymmetryPlan) -> int:
 
     corners = []
     for vert in bm.verts:
-        if len(vert.link_edges) != 2 or len(vert.link_faces) != 2 or not _on_plane(vert):
+        if len(vert.link_edges) != 2 or len(vert.link_faces) != 2 or (plan is not None and not _on_plane(vert)):
             continue
         first, second = vert.link_faces
         if len(first.verts) != 4 or len(second.verts) != 4:
@@ -1362,6 +1365,15 @@ def _discard(result_level):
     bpy.data.meshes.remove(mesh)
 
 
+def _debug_valence2(mesh, where: str) -> None:
+    """Test aid (QUADFORGE_PROFILE): how many vertices have only two edges after this stage."""
+    if os.environ.get("QUADFORGE_PROFILE"):
+        edge_vertices = np.empty(len(mesh.edges) * 2, dtype=np.int64)
+        mesh.edges.foreach_get("vertices", edge_vertices)
+        print(f"   valence-2 after {where}: {int(np.count_nonzero(np.bincount(edge_vertices, minlength=len(mesh.vertices)) == 2))}",
+              file=sys.stderr)
+
+
 def _badness(mesh, target: int) -> float:
     """Ordering of finished results: first the count error beyond the tolerance, then the flaw share."""
     faces = max(1, len(mesh.polygons))
@@ -1438,8 +1450,12 @@ def run_steps(context, original, settings: RemeshSettings,
         else:
             _warn_thin_strips(best, target, settings)
             return best
+        if os.environ.get("QUADFORGE_PROFILE"):
+            print(f"   retry: count={count_tried} fine={fine_tried} plain={plain_tried} faces={faces} flaws={_layout_flaws(first.object.data)}", file=sys.stderr)
         second_result = yield from _run_steps_once(context, original, retry, progress)
         second = second_result.levels[0]
+        if os.environ.get("QUADFORGE_PROFILE"):
+            print(f"   -> second badness {_badness(second.object.data, target):.4f} vs first {_badness(first.object.data, target):.4f}", file=sys.stderr)
         if _badness(second.object.data, target) < _badness(first.object.data, target):
             name = first.object.name
             _discard(first)
@@ -1542,13 +1558,16 @@ def _run_steps_once(context, original, settings: RemeshSettings,
                     zone_report.append((label, set(np.unique(found_labels).tolist())))
             if settings.relax_quads and settings.output == "QUADS" and source.surface_tree is not None:
                 with profiler.stage(f"Level {label}: relax bad quads"):
+                    _debug_valence2(half_mesh, 'engine')
                     detail.relax_bad_quads(half_mesh, source.surface_tree, snap_angle, RELAX_PASSES)
+                _debug_valence2(half_mesh, 'relax')
             if source.surface_tree is not None:
                 with profiler.stage(f"Level {label}: pull stray vertices"):
                     detail.pull_stray_vertices(half_mesh, source.surface_tree, plan.axes, plan.plane_offsets, plan.tolerance)
             if settings.use_surface_analysis and settings.output == "QUADS":
                 with profiler.stage(f"Level {label}: join leftover triangles"):
                     _join_leftover_triangles(half_mesh)
+                _debug_valence2(half_mesh, 'join')
             finished_halves.append((target, half_mesh, constraints.hard_edge_count,
                                     time.perf_counter() - level_started))
 
@@ -1571,6 +1590,7 @@ def _run_steps_once(context, original, settings: RemeshSettings,
                             warnings.append("Subdivision match was skipped: the result has triangles or n-gons.")
                     except Exception as error:  # noqa: BLE001
                         warnings.append(f"Subdivision match failed ({error!r}); the result is unchanged.")
+                _debug_valence2(final_mesh, 'mirror/tidy')
                 result_object = _create_result_object(context, original, final_mesh, name)
                 if data_source is not None and wants_uvs:
                     try:

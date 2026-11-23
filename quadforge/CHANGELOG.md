@@ -2,6 +2,8 @@
 
 ## Unreleased (next)
 
+- **Pinched corners are dissolved** (`pipeline._dissolve_seam_corners` with no symmetry plan, run in `_tidy_seam`): a vertex with only two edges between two quads, which the engine leaves where a chamfer is thinner than a cell, merges its two quads into one. Cylinder Ver-01 at 5K had 20 of them in the finished mesh, now none; the other parts had none. Side effect: the result order of the reruns no longer hides a thin-chamfer limit, so Cylinder Ver-01 at 5K now ends at 3.6 % squeezed quads (7 of 8 at 5K; 6K 3.3 %, 7K 0.19 %), which the panel already warns about.
+- **Tests and tools:** `tools/cad_battery.py --threads N`, `QUADFORGE_THREADS` and `QUADFORGE_PROFILE` (stage times, reruns, pinched corners per stage); `tests/blender_pinch_test.py`. Result is identical with 1, 2 and 10 threads.
 - Open work: green tooth on the rounded end of Test Object Ver-04, one-surface fit of rounded ends, Cylinder Ver-03 with symmetry X is slow at 10K, seam triangles of Ver-04 with symmetry X, replay with 10 threads, Windows/macOS validation (see `docs/STATUS_AND_LIMITS.md`).
 
 ## 0.18.8 — 2026-11-23

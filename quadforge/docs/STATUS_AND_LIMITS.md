@@ -21,7 +21,8 @@ See `EXPERIMENT_LOG.md` for the short list of what was tried, kept and rejected.
 
 | Set | Target | Passed |
 |---|---|---|
-| 8 parts, no symmetry | 5K, 20K | 8 of 8 |
+| 8 parts, no symmetry | 20K | 8 of 8 |
+| 8 parts, no symmetry | 5K | 7 of 8 (Cylinder Ver-01: 3.6 % squeezed quads along its thin chamfer rings; 6K gives 3.3 %, 7K passes with 0.19 %) |
 | 8 parts, no symmetry | 1.5K | 4 of 8 |
 | `sym/` (4 parts mirrored in X), symmetry X | 10K, 40K | 4 of 4 |
 | `sym/`, symmetry X | 2.5K | 2 of 4 (Cylinder Ver-01, Test Object Ver-04: 7-10 % untidy faces) |
@@ -375,3 +376,9 @@ Where: `engine-rs/src/pipeline.rs::long_feature_chains` (`FORGE_THINFEAT`, cells
 
 Per part: Cylinder_Ver-01 362 / 289 / 63, Test_Object_Ver-01 171 / 482 / 109. Non-monotonic, so the choice is a compromise; a real fix keeps one line of the pair but pins the other to the same row (ring constraint). Next.
 
+
+## Measured after 0.18.8 (development)
+- The engine result does not depend on the thread count: the 8 parts at 5K give byte-identical meshes with 1, 2 and 10 threads. A difference between a 10-core computer and the cloud's 2 cores is not a thread effect.
+- Reruns (`run_steps`): up to three extra engine runs when the count is off or the layout is untidy; each is kept only when better. On symmetric parts at 10K that is 3 to 4 runs (Cylinder Ver-01: 29 s for 6 s of engine time), which is where the slowness of Cylinder Ver-03 with symmetry comes from. Tried and rejected: extra runs asking for 0.94x, 1.06x of the request (no gain, +20 s).
+- Seam triangles on Test Object Ver-04 with symmetry X at 10K: 24 of 10 223 faces (0.2 %), 22 of them in mirrored pairs on the plane; lowering the shape gate of `_merge_seam_triangle_pairs` from 0.2 to 0.08 removes only 2, so it stays.
+- Pinched corners (a vertex with only two edges, which the engine leaves where a chamfer is thinner than a cell) are now dissolved after the engine: 20 of them on Cylinder Ver-01 at 5K before, none now (`_dissolve_seam_corners`, plan None).
