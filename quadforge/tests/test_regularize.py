@@ -85,3 +85,13 @@ def test_two_face_tooth_on_a_border_is_rounded_off_but_planes_stay():
     assert (out != labels).sum() > 0 and (out[tooth] == 1).sum() > 0
     flat = R.smooth_boundaries(topo, labels, ["plane", "freeform"])
     assert (flat == labels).all()         # a plane never moves
+
+
+def test_poor_primitive_fit_is_reported_as_freeform():
+    co, sizes, idx = strip(4)
+    report = {"surfaces": [{"id": 0, "kind": "cone", "triangles": 8, "err": 0.0034},
+                           {"id": 1, "kind": "cylinder", "triangles": 0, "err": 0.0005}],
+              "borders": [], "bands": {"bands": []}}
+    labels = np.zeros(8, np.int32)
+    _, out = R.regularize(co, sizes, idx, labels, report)
+    assert out["surfaces"][0]["kind"] == "freeform" and out["surfaces"][1]["kind"] == "cylinder"

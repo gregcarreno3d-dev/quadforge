@@ -5,7 +5,9 @@ freeform patches side by side) with stair-stepped borders. This module runs on t
 
 1. ``merge_fragments``: a small curved region (or a small flat one that only curved regions surround, chamfer and bevel strips aside) joins the neighbour it shares the longest smooth border with.
 2. ``majority_filter``: single faces on the wrong side of a border change side.
-3. ``rebuild_borders``: the border list is rebuilt for the new labels (old kind kept where the pair existed;
+3. A cone, sphere, cylinder or revolution whose fit error is above ``FIT_ERR_MAX`` is reported as free-form (a fillet
+   saddle that a cone only approximates).
+4. ``rebuild_borders``: the border list is rebuilt for the new labels (old kind kept where the pair existed;
    a new pair is tangent when its dihedral angle is small, sharp otherwise).
 
 Planes are never absorbed by curved regions and curved regions never absorbed by planes across a crease: only borders
@@ -20,6 +22,8 @@ TANGENT_DEG = 12.0     # new border pairs below this are reported as tangent, ot
 SMALL_FACES = 12       # curved regions up to this many faces (or SMALL_FRACTION of the part) are fragments
 SMALL_FRACTION = 0.004
 PLANE = "plane"
+FIT_ERR_MAX = 0.003     # a cone / sphere / cylinder / revolution fit worse than this share of the diagonal is really free-form
+PRIMITIVE_KINDS = ("cylinder", "sphere", "cone", "revolution")
 MERGE_FLAT = True       # small flat fragments enclosed by curved regions join them
 BAND_KINDS = ("chamfer", "bevel")   # defined by the band detector (exact width): never grown or eroded here
 
@@ -277,6 +281,9 @@ def regularize(co: np.ndarray, sizes: np.ndarray, idx: np.ndarray, labels: np.nd
         s = dict(s)
         s["triangles"] = int(n)
         surfaces.append(s)
+    for s in surfaces:
+        if s["kind"] in PRIMITIVE_KINDS and (s.get("err") or 0.0) > FIT_ERR_MAX:
+            s["kind"] = "freeform"
     report["surfaces"] = surfaces
     report["borders"] = rebuild_borders(topo, new, report["borders"])
     report["face_surface"] = new.tolist()
