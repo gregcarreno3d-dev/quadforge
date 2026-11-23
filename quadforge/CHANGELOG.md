@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased (next)
+
+- **Stray vertices are pulled back to the source** (`detail.pull_stray_vertices`, runs after the bad-quad relax): a vertex more than 0.3 % of the model diagonal off the source surface moves onto it (a vertex on a symmetry plane keeps its plane coordinate); everything else stays as the engine made it. Test Object Ver-04, symmetry X, 3.5K: worst distance 0.97 % -> 0.25 %. Counts and results unchanged on all 8 parts at 5K and on the 4 mirrored parts at 10K.
+- Tools: `cad_battery.py --no-join` / `--no-relax` (experiments). Test: `blender_stray_test.py`. Corpus: `tools/corpus_real/sym/` (mirrored parts).
+
 ## 0.18.7
 
 - **Analyze Surfaces regularization** (`core/regularize.py`, new): the classification is tidied after the engine: small curved fragments (a dome split into cylinder / sphere / freeform patches) join the neighbour they share the longest smooth border with; a majority filter straightens stair-stepped borders (planes never move, no face crosses a crease of 20 degrees or more); the border list and triangle counts are rebuilt so colours, selection and feature lines agree. Test_Object_Ver-04: 90 regions (39 of 10 faces or fewer) become 38 (10 small). Limit: large mis-typed patches (a big cylinder patch inside a dome) stay; they need a better fit in the engine.

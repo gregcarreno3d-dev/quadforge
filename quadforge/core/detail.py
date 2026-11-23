@@ -53,6 +53,43 @@ def quad_stretch(arrays) -> np.ndarray:
     return lengths.max(axis=1) / np.maximum(lengths.min(axis=1), 1e-30)
 
 
+STRAY_FRACTION = 0.003            # a vertex farther than this share of the model diagonal from the source is a stray
+
+
+def pull_stray_vertices(mesh, surface_tree, plane_axes=(), plane_offsets=None, plane_tolerance: float = 0.0) -> int:
+    """Put the few vertices that ended up clearly off the source surface back on it. Returns how many moved.
+
+    Only vertices farther than ``STRAY_FRACTION`` of the model diagonal move (everything else is left as the engine
+    made it, so chamfers keep their shape). A vertex on a symmetry plane keeps its plane coordinate, so the mirror
+    and weld still match.
+    """
+    arrays = mio.read_mesh_arrays(mesh)
+    if arrays.n_verts == 0:
+        return 0
+    before = arrays.co.astype(np.float64)
+    diagonal = float(np.linalg.norm(before.max(axis=0) - before.min(axis=0)))
+    limit = STRAY_FRACTION * diagonal
+    plane_offsets = plane_offsets or {}
+    moved = 0
+    after = before.copy()
+    for index in range(arrays.n_verts):
+        hit = surface_tree.find_nearest(Vector(before[index]))
+        if hit[0] is None:
+            continue
+        target = np.asarray(hit[0], dtype=np.float64)
+        if float(np.linalg.norm(target - before[index])) <= limit:
+            continue
+        for axis in plane_axes:
+            if abs(before[index][axis] - plane_offsets.get(axis, 0.0)) <= plane_tolerance:
+                target[axis] = before[index][axis]
+        after[index] = target
+        moved += 1
+    if moved:
+        mesh.vertices.foreach_set("co", after.astype(np.float32).reshape(-1))
+        mesh.update()
+    return moved
+
+
 def relax_bad_quads(mesh, surface_tree, sharp_angle_degrees, passes: int) -> int:
     """Even out only the badly shaped quads and put the moved vertices back on the original surface.
 

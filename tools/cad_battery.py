@@ -207,6 +207,8 @@ def main():
     parser.add_argument("--csv", help="write the table to this CSV file")
     parser.add_argument("--no-soft-bevels", action="store_true", help="switch Rounded Bevels off (experiment)")
     parser.add_argument("--no-smooth", action="store_true", help="switch the surface-border majority filter off (experiment)")
+    parser.add_argument("--no-join", action="store_true", help="skip the leftover-triangle joining (experiment)")
+    parser.add_argument("--no-relax", action="store_true", help="skip relaxing bad quads (experiment)")
     parser.add_argument("--save", help="folder: write every result as a Wavefront OBJ there for inspection")
     args = parser.parse_args()
 
@@ -222,6 +224,10 @@ def main():
 
     import bpy
     from quadforge.core import pipeline
+    if args.no_join:
+        pipeline._join_leftover_triangles = lambda mesh: None
+    if args.no_relax:
+        pipeline.detail.relax_bad_quads = lambda *a, **k: None
     rows = []
     for path in paths:
         try:

@@ -48,7 +48,7 @@ quadforge/                    the add-on (this folder is what Blender installs)
     mesh_io.py                bulk read/write of Blender mesh data with foreach_get/foreach_set
     forge_io.py               .fmesh read/write
     bands.py                  chamfer/bevel detector client: runs `forge bands`, guesses mm per unit (see docs/CHAMFER_BEVEL_DETECTOR)
-    detail.py                 relax badly shaped quads and project them back on the source
+    detail.py                 relax badly shaped quads and project them back on the source; pull stray vertices back (0.3 % of the diagonal)
     uvtransfer.py             UV transfer by projection onto the original surface
     zonedata.py               Face Sets and sculpt-mask transfer
     form_detail.py            Detail on Curves: per-vertex edge-length multiplier from the bend of the form
@@ -303,7 +303,7 @@ Full description: `quadforge/docs/CHAMFER_BEVEL_DETECTOR.md`. Summary for code r
 Surface profiles (`presets.SURFACE_PROFILES`): **Hard Surface** (hard edges from about 30°, right angles on, snapping
 on, Detail on Curves off, `use_surface_analysis` on, `shading` FLAT) and **Organic** (hard-edge detection off, Detail on Curves Medium,
 `shading` SMOOTH). Changing any of these values by hand unmarks the button (`_unmark_surface`). Presets set target and angle and never touch symmetry or zones.
-With `use_surface_analysis` and quad output, `pipeline._join_leftover_triangles` joins neighbouring triangle pairs after the relax step.
+With `use_surface_analysis` and quad output, `pipeline._join_leftover_triangles` joins neighbouring triangle pairs after the relax step. Right after the relax, `detail.pull_stray_vertices` puts any vertex more than 0.3 % of the diagonal off the source back on it (plane vertices keep their plane coordinate).
 
 ## 6. Invariants and rules for anyone changing the code
 

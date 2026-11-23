@@ -1543,6 +1543,9 @@ def _run_steps_once(context, original, settings: RemeshSettings,
             if settings.relax_quads and settings.output == "QUADS" and source.surface_tree is not None:
                 with profiler.stage(f"Level {label}: relax bad quads"):
                     detail.relax_bad_quads(half_mesh, source.surface_tree, snap_angle, RELAX_PASSES)
+            if source.surface_tree is not None:
+                with profiler.stage(f"Level {label}: pull stray vertices"):
+                    detail.pull_stray_vertices(half_mesh, source.surface_tree, plan.axes, plan.plane_offsets, plan.tolerance)
             if settings.use_surface_analysis and settings.output == "QUADS":
                 with profiler.stage(f"Level {label}: join leftover triangles"):
                     _join_leftover_triangles(half_mesh)
