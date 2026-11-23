@@ -60,3 +60,28 @@ def test_band_strips_never_grow_and_enclosed_flat_fragment_joins():
     labels2[26:30] = 0
     out2, merged = R.merge_fragments(topo, labels2, kinds)
     assert merged >= 1 and (out2[24:26] == 0).all()      # a 2-face flat sliver inside the curved region joined it
+
+
+def grid(w, h):
+    """w x h quads (2 triangles each) on a flat sheet."""
+    co = np.array([[float(x), float(y), 0.0] for y in range(h + 1) for x in range(w + 1)], np.float32)
+    tris = []
+    for y in range(h):
+        for x in range(w):
+            a, b, c, d = y * (w + 1) + x, y * (w + 1) + x + 1, (y + 1) * (w + 1) + x, (y + 1) * (w + 1) + x + 1
+            tris += [[a, b, c], [b, d, c]]
+    return co, np.full(len(tris), 3, np.int32), np.array(tris, np.int32).ravel()
+
+
+def test_two_face_tooth_on_a_border_is_rounded_off_but_planes_stay():
+    co, sizes, idx = grid(12, 8)
+    topo = R.Topology(co, sizes, idx)
+    centroids = np.array([co[idx[3 * f:3 * f + 3]].mean(0) for f in range(len(sizes))])
+    labels = np.where(centroids[:, 0] < 6.0, 0, 1).astype(np.int32)
+    tooth = (centroids[:, 0] > 5.0) & (centroids[:, 0] < 7.2) & (centroids[:, 1] > 3.0) & (centroids[:, 1] < 4.2)
+    labels[tooth] = 0                     # a tooth of region 0 reaching two cells into region 1
+    kinds = ["cylinder", "freeform"]
+    out = R.smooth_boundaries(topo, labels, kinds)
+    assert (out != labels).sum() > 0 and (out[tooth] == 1).sum() > 0
+    flat = R.smooth_boundaries(topo, labels, ["plane", "freeform"])
+    assert (flat == labels).all()         # a plane never moves

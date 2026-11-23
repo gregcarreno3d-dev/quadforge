@@ -27,7 +27,7 @@ See `EXPERIMENT_LOG.md` for the short list of what was tried, kept and rejected.
 | `sym/`, symmetry X | 2.5K | 2 of 4 (Cylinder Ver-01, Test Object Ver-04: 7-10 % untidy faces) |
 
 - Below about 5K faces, parts whose smallest chamfer or pocket is narrower than one cell end with triangles and squeezed quads around it. The panel already warns after the remesh and suggests 1.4x or 2x the quads; on Cylinder Ver-01 and Test Object Ver-04 that suggestion (about 5K) is where both pass.
-- Analyze Surfaces on Test Object Ver-04 still shows two ragged curved borders (stair-stepped teeth between the big cylinder and the rounded end, and a sphere patch on the rounded end that belongs with it). They are wider than the fragment limit, so the regularizer leaves them; fixing them needs the engine to fit the rounded end as one surface.
+- Analyze Surfaces on Test Object Ver-04 still shows a few teeth of the big cylinder along the border of the rounded end (one at the top is about three faces wide). The two-face rounding leaves anything wider; fixing it for good needs the engine to fit the rounded end as one surface.
 - Test Object Ver-04, symmetry X, 3.5K: one vertex on the symmetry plane inside the small pocket ends 0.98 % of the diagonal off the source (limit 0.5 %). One vertex of 3318, produced by the engine (it stays with relax and joining switched off). Fixed after 0.18.7 by `pull_stray_vertices` (0.25 % now).
 - Symmetry X on a part that is not mirrored (Cylinder Ver-01 and Test Object Ver-02/05 as first sent) moves the mesh off the surface by design; the panel warns when fewer than 90 % of the sampled points match.
 

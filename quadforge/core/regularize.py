@@ -187,6 +187,58 @@ def majority_filter(topo: Topology, labels: np.ndarray, kinds: list[str], rounds
     return out
 
 
+RING_SHARE = 0.5        # a face moves when this share of its two-ring neighbourhood holds one other curved label
+OWN_SHARE = 0.5         # ...and its own label holds at most this share
+
+
+def smooth_boundaries(topo: Topology, labels: np.ndarray, kinds: list[str], rounds: int = 4) -> np.ndarray:
+    """Round off teeth and stairs of a ragged border between two curved regions (looks two faces deep).
+
+    A curved face moves to the other curved label that holds at least ``RING_SHARE`` of its two-ring neighbourhood
+    while its own label holds at most ``OWN_SHARE`` of it, across smooth edges only. Planes, chamfers and bevels never
+    move and never receive faces.
+    """
+    out = labels.copy()
+    edge_angle: dict[tuple[int, int], float] = {}
+    for (a, b), ang in zip(topo.pairs.tolist(), topo.angle.tolist()):
+        edge_angle[(a, b)] = edge_angle[(b, a)] = ang
+    fixed = [k == PLANE or k in BAND_KINDS for k in kinds]
+    for _ in range(rounds):
+        new = out.copy()
+        changed = 0
+        for f in range(topo.n):
+            mine = int(out[f])
+            if mine < 0 or fixed[mine]:
+                continue
+            ring = set(topo.neighbours[f])
+            for g in topo.neighbours[f]:
+                ring.update(topo.neighbours[g])
+            ring.discard(f)
+            if len(ring) < 6:
+                continue
+            counts: dict[int, int] = {}
+            for g in ring:
+                lab = int(out[g])
+                counts[lab] = counts.get(lab, 0) + 1
+            total = len(ring)
+            if counts.get(mine, 0) > OWN_SHARE * total:
+                continue
+            others = [(n, lab) for lab, n in counts.items() if lab >= 0 and lab != mine and not fixed[lab]]
+            if not others:
+                continue
+            n_best, best = max(others)
+            if n_best < RING_SHARE * total:
+                continue
+            angles = [edge_angle[(f, g)] for g in topo.neighbours[f] if int(out[g]) == best]
+            if angles and np.mean(angles) < SMOOTH_DEG:
+                new[f] = best
+                changed += 1
+        out = new
+        if not changed:
+            break
+    return out
+
+
 def rebuild_borders(topo: Topology, labels: np.ndarray, old_borders: list) -> list:
     """Border list for ``labels``: one entry per touching surface pair, keeping the old kind where the pair existed."""
     old = {(b["a"], b["b"]): b for b in old_borders}
@@ -217,6 +269,7 @@ def regularize(co: np.ndarray, sizes: np.ndarray, idx: np.ndarray, labels: np.nd
     widths = band_widths(report)
     new, merged = merge_fragments(topo, labels, kinds, widths)
     new = majority_filter(topo, new, kinds, widths=widths)
+    new = smooth_boundaries(topo, new, kinds)
     report = dict(report)
     counts = np.bincount(new[new >= 0], minlength=len(kinds))
     surfaces = []
