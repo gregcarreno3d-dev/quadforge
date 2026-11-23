@@ -28,6 +28,9 @@ that breaks another part, stays out of the code and is listed here.
 | Loop-snap size fields (per loop and grouped), ring-grid in the Rust engine | flange 8.1 % to 7.7 %, 4x slower | Circumference not a whole number of cells costs ~1 % of a cell; not the cause |
 | `FORGE_THINFEAT` 0.4 and 0 | no gain, 3x slower | |
 | Quad-loop removal of squeezed strips as a post step | 2 usable rings on the flange, both tore the surface | An edge ring is global (short in the strip, normal elsewhere); a partial collapse leaves a triangle at each end |
+- **Snap radius to marked lines 0.3 -> 0.1 / 0.2 / 0.45 / 0.6 / 1.0 rho (engine, `finish.rs`)**, Cylinder Ver-01 at 5K: up to 0.45 no change; 0.6 on the 8 parts at 5K: 1 of 8 pass (Test Object Ver-01 18 % untidy). Keep 0.3. (Cylinder Ver-01 alone passes at 1.0 by luck.)
+- **Reruns with 0.94x and 1.06x of the request; relax passes 2 / 6 / 12; strip collapse 5 / 50 %; quad quality off (engine)** on Cylinder Ver-01 at 5K: no change or worse, +20 s. Not kept.
+- **What the untidy faces of Cylinder Ver-01 at 5K are** (154 quads under 11.5 degrees): 82 have a flat (about 180 degrees) corner at a valence-3 vertex, 34 flat corner at valence 4, 40 needles or short edges. They sit on the fillet that joins the top face to the wall, not in thin chamfers: a coarse lattice where the border jogs one row. The next engine experiment is there (how the border row is placed against the grid), not in the sizes.
 
 ## Open
 
