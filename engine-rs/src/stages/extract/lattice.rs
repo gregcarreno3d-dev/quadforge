@@ -12,7 +12,8 @@ use crate::math::Vec3;
 use crate::mesh::bvh::{SegmentIndex, SurfaceIndex};
 use crate::mesh::cmesh::CMesh;
 use crate::stages::param::ParamResult;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::BTreeMap;
+use crate::det::{HashMap, HashSet};
 
 pub struct LatticeContext<'a> {
     pub m: &'a CMesh,
@@ -100,7 +101,7 @@ fn snap_and_link(c: &LatticeContext) -> Snapped {
             tris.push(t);
         }
         let mut ex = Virtual::default();
-        let mut mid_of: HashMap<u64, i32> = HashMap::new();
+        let mut mid_of: HashMap<u64, i32> = HashMap::default();
         let base_scale = |v: i32, ex: &Virtual| -> f64 {
             if (v as usize) < n_vs { if m.vdens.is_empty() { 1.0 } else { m.vdens[v as usize] as f64 } } else { ex.scale[v as usize - n_vs] }
         };
@@ -109,7 +110,7 @@ fn snap_and_link(c: &LatticeContext) -> Snapped {
         let mut added_tris: i64 = 0;
         if !env_set("FORGE_NOSUBDIV") {
             for _round in 0..3 {
-                let mut split: HashSet<u64> = HashSet::new();
+                let mut split: HashSet<u64> = HashSet::default();
                 for t in &tris {
                     for k in 0..3 {
                         let k2 = (k + 1) % 3;
@@ -229,7 +230,7 @@ fn build_cells(c: &LatticeContext, sn: &mut Snapped, st: &mut ExtractStats) -> C
     let m = c.m;
     let vf = c.vf;
     let n_vs = m.num_vert_slots() as usize;
-    let mut cell_of: HashMap<usize, usize> = HashMap::new();
+    let mut cell_of: HashMap<usize, usize> = HashMap::default();
     let (mut cpos, mut cn, mut cnt, mut cfeat): (Vec<Vec3>, Vec<Vec3>, Vec<i32>, Vec<u8>) = (vec![], vec![], vec![], vec![]);
     let mut ccorner: Vec<i32> = Vec::new();
     for &v in &sn.cell_ids {
@@ -256,7 +257,7 @@ fn build_cells(c: &LatticeContext, sn: &mut Snapped, st: &mut ExtractStats) -> C
     }
     st.cells = n_c as i32;
     let mut nbr: Vec<Vec<usize>> = vec![Vec::new(); n_c];
-    let mut seen: HashSet<u64> = HashSet::new();
+    let mut seen: HashSet<u64> = HashSet::default();
     for &(la, lb) in &sn.links {
         let a = cell_of[&sn.dsu.find(la as usize)];
         let b = cell_of[&sn.dsu.find(lb as usize)];
@@ -353,7 +354,7 @@ fn trace_faces(cells: &mut Cells, st: &mut ExtractStats) -> Vec<Vec<usize>> {
 
 /// Fill the small holes left by loops that did not close (never along real borders).
 fn fill_holes(faces: &mut Vec<Vec<usize>>, st: &mut ExtractStats) {
-    let mut has_edge: HashSet<u64> = HashSet::new();
+    let mut has_edge: HashSet<u64> = HashSet::default();
     for f in faces.iter() { for k in 0..f.len() { has_edge.insert(dkey(f[k] as i32, f[(k + 1) % f.len()] as i32)); } }
     let mut out_: BTreeMap<usize, Vec<usize>> = BTreeMap::new(); // boundary edges by start cell
     for f in faces.iter() {
@@ -362,7 +363,7 @@ fn fill_holes(faces: &mut Vec<Vec<usize>>, st: &mut ExtractStats) {
             if !has_edge.contains(&dkey(b as i32, a as i32)) { out_.entry(a).or_default().push(b); }
         }
     }
-    let mut done: HashSet<u64> = HashSet::new();
+    let mut done: HashSet<u64> = HashSet::default();
     const MAX_HOLE: usize = 64;
     let mut extra: Vec<Vec<usize>> = Vec::new();
     for (&a0, list) in &out_ {

@@ -7,7 +7,7 @@
 //! keeps the quads square.
 use crate::math::Vec3;
 use crate::util::rng::Mt19937;
-use std::collections::HashMap;
+use crate::det::HashMap;
 
 #[derive(Clone, Debug, Default)]
 pub struct QuadOptStats {
@@ -22,7 +22,7 @@ pub fn optimize_poles(p: &[Vec3], f: &mut [[i32; 4]], moves_per_face: f64, geom_
     let n_v = p.len();
     let n_f = f.len();
     if n_f < 2 { return; }
-    let mut he: HashMap<u64, i32> = HashMap::with_capacity(n_f * 8);
+    let mut he: HashMap<u64, i32> = HashMap::with_capacity_and_hasher(n_f * 8, Default::default());
     for fi in 0..n_f { for k in 0..4 { he.insert(key(f[fi][k], f[fi][(k + 1) % 4]), fi as i32); } }
     let mut nbr: Vec<Vec<i32>> = vec![Vec::new(); n_v];
     let mut bnd = vec![false; n_v];

@@ -12,7 +12,7 @@
 use crate::io::fmesh::PolyMesh;
 use crate::math::Vec3;
 use crate::stages::bands::{self, BandParams, BandReport};
-use std::collections::{HashMap, HashSet};
+use crate::det::{HashMap, HashSet};
 
 #[derive(Clone, Debug)]
 pub struct SurfParams {
@@ -250,7 +250,7 @@ fn build(m: &PolyMesh) -> Option<Tris> {
     }
     let diag = (hi - lo).length().max(1e-12);
     let eps = diag * 1e-6;
-    let mut keymap: HashMap<(i64, i64, i64), u32> = HashMap::new();
+    let mut keymap: HashMap<(i64, i64, i64), u32> = HashMap::default();
     let mut wp: Vec<Vec3> = Vec::new();
     let mut remap = vec![0u32; m.p.len()];
     for (i, p) in m.p.iter().enumerate() {
@@ -278,7 +278,7 @@ fn build(m: &PolyMesh) -> Option<Tris> {
         nrm[f] = c.normalized();
     }
     let ekey = |a: u32, b: u32| -> u64 { let (x, y) = if a < b { (a, b) } else { (b, a) }; ((x as u64) << 32) | y as u64 };
-    let mut emap: HashMap<u64, Vec<i32>> = HashMap::new();
+    let mut emap: HashMap<u64, Vec<i32>> = HashMap::default();
     for (f, t) in tv.iter().enumerate() {
         for i in 0..3 { emap.entry(ekey(t[i], t[(i + 1) % 3])).or_default().push(f as i32); }
     }
@@ -347,7 +347,7 @@ pub fn analyze(m: &PolyMesh, prm: &SurfParams) -> SurfaceReport {
     // ---------- 2. patch adjacency: (a, b) -> (length, sum angle*length, longest shared edge direction, its length)
     #[derive(Clone, Copy)]
     struct Link { len: f64, ang: f64, dir: Vec3, dlen: f64 }
-    let mut links: HashMap<(usize, usize), Link> = HashMap::new();
+    let mut links: HashMap<(usize, usize), Link> = HashMap::default();
     for f in 0..nf {
         if patch[f] < 0 { continue; }
         for i in 0..3 {
@@ -430,7 +430,7 @@ pub fn analyze(m: &PolyMesh, prm: &SurfParams) -> SurfaceReport {
         let l = links[&(a, b)];
         if l.dir.dot(axis).abs() < 0.97 || !normals_ok(a, axis) || !normals_ok(b, axis) { continue; }
         let mut members = vec![a, b];
-        let pts_of = |ms: &[usize]| -> Vec<Vec3> { let mut s: HashSet<u32> = HashSet::new(); for &q in ms { for &v in &p_verts[q] { s.insert(v); } } s.into_iter().map(|v| t.wp[v as usize]).collect() };
+        let pts_of = |ms: &[usize]| -> Vec<Vec3> { let mut s: HashSet<u32> = HashSet::default(); for &q in ms { for &v in &p_verts[q] { s.insert(v); } } s.into_iter().map(|v| t.wp[v as usize]).collect() };
         let Some((mut c, mut r)) = fit_circle(&pts_of(&members), axis) else { continue };
         if r < 3.0 * tol { continue; }
         let worst = |ms: &[usize], c: Vec3, r: f64| -> f64 { ms.iter().flat_map(|&q| p_verts[q].iter()).map(|&v| (dist_to_axis(t.wp[v as usize], c, axis) - r).abs()).fold(0.0, f64::max) };
@@ -494,7 +494,7 @@ pub fn analyze(m: &PolyMesh, prm: &SurfParams) -> SurfaceReport {
         let (ra, rb) = (cfind(&mut cpar, ca as usize), cfind(&mut cpar, cb as usize));
         if ra != rb { cpar[ra] = rb; }
     }
-    let mut cgroup: HashMap<usize, Vec<usize>> = HashMap::new();
+    let mut cgroup: HashMap<usize, Vec<usize>> = HashMap::default();
     for i in 0..nc { let r = cfind(&mut cpar, i); cgroup.entry(r).or_default().push(i); }
     let mut croots: Vec<usize> = cgroup.keys().copied().collect();
     croots.sort_unstable();
@@ -525,7 +525,7 @@ pub fn analyze(m: &PolyMesh, prm: &SurfParams) -> SurfaceReport {
         let g = gk.len() as i32;
         for &q in list { group[q] = g; }
         // radius against height along the axis: constant = cylinder, straight line = cone, otherwise a general surface of revolution
-        let mut set: HashSet<u32> = HashSet::new();
+        let mut set: HashSet<u32> = HashSet::default();
         for &q in list { for &v in &p_verts[q] { set.insert(v); } }
         let rh: Vec<(f64, f64)> = set.iter().map(|&v| { let d = t.wp[v as usize] - *mid; (d.dot(*ax), (d - *ax * d.dot(*ax)).length()) }).collect();
         let (rmin, rmax) = rh.iter().fold((f64::MAX, 0.0f64), |a, b| (a.0.min(b.1), a.1.max(b.1)));
@@ -549,7 +549,7 @@ pub fn analyze(m: &PolyMesh, prm: &SurfParams) -> SurfaceReport {
     let p_cen_early = |q: usize| -> Vec3 { let mut sm = Vec3::ZERO; let mut w = 0.0; for &f in &p_tris[q] { let c = t.tv[f].iter().map(|&v| t.wp[v as usize]).fold(Vec3::ZERO, |a, b| a + b) * (1.0 / 3.0); sm += c * t.area[f]; w += t.area[f]; } sm * (1.0 / w.max(1e-30)) };
     for list in &comps {
         if list.len() >= 4 {
-            let mut set: HashSet<u32> = HashSet::new();
+            let mut set: HashSet<u32> = HashSet::default();
             for &q in list { for &v in &p_verts[q] { set.insert(v); } }
             let pts: Vec<Vec3> = set.into_iter().map(|v| t.wp[v as usize]).collect();
             let tol_s = 2.0 * tol;
@@ -589,8 +589,8 @@ pub fn analyze(m: &PolyMesh, prm: &SurfParams) -> SurfaceReport {
     // surface id per patch
     let mut surf_of_patch = vec![-1i32; np];
     let mut surfaces: Vec<Surface> = Vec::new();
-    let mut gmap: HashMap<i32, i32> = HashMap::new();
-    let mut pmap: HashMap<usize, i32> = HashMap::new();
+    let mut gmap: HashMap<i32, i32> = HashMap::default();
+    let mut pmap: HashMap<usize, i32> = HashMap::default();
     for q in 0..np {
         let sid = if group[q] >= 0 {
             *gmap.entry(group[q]).or_insert_with(|| {
@@ -609,7 +609,7 @@ pub fn analyze(m: &PolyMesh, prm: &SurfParams) -> SurfaceReport {
         surf_of_patch[q] = sid;
     }
     // bands become surfaces too
-    let mut band_surf: HashMap<i32, i32> = HashMap::new();
+    let mut band_surf: HashMap<i32, i32> = HashMap::default();
     for (i, b) in rep.bands.bands.iter().enumerate() {
         surfaces.push(Surface { kind: b.kind, radius: b.radius, band: i as i32, ..Default::default() });
         band_surf.insert(i as i32, (surfaces.len() - 1) as i32);
@@ -654,7 +654,7 @@ pub fn analyze(m: &PolyMesh, prm: &SurfParams) -> SurfaceReport {
         for _pass in 0..4 {
             let mut sa = vec![0.0f64; surfaces.len()];
             for f in 0..nf { if tsurf[f] >= 0 { sa[tsurf[f] as usize] += t.area[f]; } }
-            let mut share: HashMap<(i32, i32), f64> = HashMap::new();
+            let mut share: HashMap<(i32, i32), f64> = HashMap::default();
             for f in 0..nf {
                 for i in 0..3 {
                     let g = t.adj[f][i];
@@ -664,7 +664,7 @@ pub fn analyze(m: &PolyMesh, prm: &SurfParams) -> SurfaceReport {
                     *share.entry((a, b)).or_insert(0.0) += t.elen[f][i];
                 }
             }
-            let mut best: HashMap<i32, (i32, f64)> = HashMap::new();
+            let mut best: HashMap<i32, (i32, f64)> = HashMap::default();
             for (&(a, b), &l) in &share {
                 if sa[a as usize] >= thr || surfaces[a as usize].band >= 0 { continue; }
                 // never swallow a surface into a band; a bigger plain surface is the target
@@ -718,7 +718,7 @@ pub fn analyze(m: &PolyMesh, prm: &SurfParams) -> SurfaceReport {
             let n = surfaces.len();
             let mut sa = vec![0.0f64; n];
             for f in 0..nf { if tsurf[f] >= 0 { sa[tsurf[f] as usize] += t.area[f]; } }
-            let mut share: HashMap<(i32, i32), (f64, f64)> = HashMap::new();
+            let mut share: HashMap<(i32, i32), (f64, f64)> = HashMap::default();
             let mut perim = vec![0.0f64; n];
             for f in 0..nf {
                 for i in 0..3 {
@@ -777,7 +777,7 @@ pub fn analyze(m: &PolyMesh, prm: &SurfParams) -> SurfaceReport {
     for (sid, s) in surfaces.iter_mut().enumerate() {
         let mut lo = Vec3::new(f64::MAX, f64::MAX, f64::MAX);
         let mut hi = Vec3::new(f64::MIN, f64::MIN, f64::MIN);
-        let mut ps: HashSet<usize> = HashSet::new();
+        let mut ps: HashSet<usize> = HashSet::default();
         let mut nsum = Vec3::ZERO;
         let mut csum = Vec3::ZERO;
         for f in 0..nf {
@@ -800,7 +800,7 @@ pub fn analyze(m: &PolyMesh, prm: &SurfParams) -> SurfaceReport {
     }
 
     // ---------- 6. borders between surfaces
-    let mut bmap: HashMap<(i32, i32), (f64, usize, f64)> = HashMap::new();
+    let mut bmap: HashMap<(i32, i32), (f64, usize, f64)> = HashMap::default();
     for f in 0..nf {
         for i in 0..3 {
             let g = t.adj[f][i];
@@ -834,7 +834,7 @@ pub fn analyze(m: &PolyMesh, prm: &SurfParams) -> SurfaceReport {
     for b in borders.iter_mut() { b.a = newid[b.a as usize]; b.b = newid[b.b as usize]; if b.a > b.b { std::mem::swap(&mut b.a, &mut b.b); } }
     rep.borders = borders;
     // polygon surface = the one covering most of its area
-    let mut acc: Vec<HashMap<i32, f64>> = vec![HashMap::new(); m.sizes.len()];
+    let mut acc: Vec<HashMap<i32, f64>> = vec![HashMap::default(); m.sizes.len()];
     for f in 0..nf { if tsurf[f] >= 0 { *acc[t.own[f] as usize].entry(newid[tsurf[f] as usize]).or_insert(0.0) += t.area[f]; } }
     for (k, a) in acc.iter().enumerate() {
         let mut best = (-1i32, -1.0);

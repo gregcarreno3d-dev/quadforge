@@ -5,7 +5,7 @@
 //! labelled so that the quads on the cap can be dropped afterwards. Short loops are simply left closed.
 use crate::math::Vec3;
 use crate::stages::repair::TriSoup;
-use std::collections::{HashMap, HashSet};
+use crate::det::{HashMap, HashSet};
 
 #[derive(Clone, Debug, Default)]
 pub struct CapInfo {
@@ -21,7 +21,7 @@ fn key(a: i32, b: i32) -> u64 { ((a as u32 as u64) << 32) | b as u32 as u64 }
 /// Isolated flat slivers: a triangle whose three edges are all open and whose vertices lie on a line has no area
 /// and belongs to no surface (a leftover of a bad weld). It would break the grid, so it is removed.
 pub fn stitch_slits(soup: &mut TriSoup) -> i32 {
-    let mut directed: HashSet<u64> = HashSet::with_capacity(soup.f.len() * 3);
+    let mut directed: HashSet<u64> = HashSet::with_capacity_and_hasher(soup.f.len() * 3, Default::default());
     for t in &soup.f { for k in 0..3 { directed.insert(key(t[k], t[(k + 1) % 3])); } }
     let mut keep = Vec::with_capacity(soup.f.len());
     let mut removed = 0;
@@ -42,9 +42,9 @@ pub fn stitch_slits(soup: &mut TriSoup) -> i32 {
 /// Returns false (soup untouched) when the border is not made of simple loops.
 pub fn cap_borders(soup: &mut TriSoup, min_loop_length: f64, info: &mut CapInfo) -> bool {
     *info = CapInfo { original_faces: soup.f.len(), ..Default::default() };
-    let mut directed: HashSet<u64> = HashSet::with_capacity(soup.f.len() * 3);
+    let mut directed: HashSet<u64> = HashSet::with_capacity_and_hasher(soup.f.len() * 3, Default::default());
     for t in &soup.f { for k in 0..3 { directed.insert(key(t[k], t[(k + 1) % 3])); } }
-    let mut next_of: HashMap<i32, i32> = HashMap::new(); // boundary edge a -> b
+    let mut next_of: HashMap<i32, i32> = HashMap::default(); // boundary edge a -> b
     // iterate in face order so loops come out in a deterministic order
     let mut order: Vec<i32> = Vec::new();
     for t in &soup.f {
@@ -58,7 +58,7 @@ pub fn cap_borders(soup: &mut TriSoup, min_loop_length: f64, info: &mut CapInfo)
     }
     if next_of.is_empty() { return true; }
     let mut loops: Vec<Vec<i32>> = Vec::new();
-    let mut seen: HashSet<i32> = HashSet::new();
+    let mut seen: HashSet<i32> = HashSet::default();
     for &start in &order {
         if seen.contains(&start) { continue; }
         let mut lp = Vec::new();

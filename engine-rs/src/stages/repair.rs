@@ -9,7 +9,7 @@
 //! * removes unused vertices.
 use crate::io::fmesh::PolyMesh;
 use crate::math::Vec3;
-use std::collections::HashSet;
+use crate::det::HashSet;
 
 #[derive(Clone, Debug, Default)]
 pub struct TriSoup {

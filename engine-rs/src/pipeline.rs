@@ -20,7 +20,7 @@ use crate::stages::remesh::{RemeshParams, RemeshStats, Remesher};
 use crate::stages::repair::{self, TriSoup};
 use crate::stages::sizefield::{curvature_size_field, gap_size_field, thickness_size_field, SizeFieldParams, SizeFieldStats};
 use crate::util::protocol::{json_safe, say};
-use std::collections::{HashMap, HashSet};
+use crate::det::{HashMap, HashSet};
 use crate::math::geom::closest_point_on_segment;
 use std::sync::Arc;
 
@@ -36,7 +36,7 @@ fn soup_area(soup: &TriSoup) -> f64 {
 }
 
 fn has_open_edges(soup: &TriSoup) -> bool {
-    let mut cnt: HashMap<u64, i32> = HashMap::new();
+    let mut cnt: HashMap<u64, i32> = HashMap::default();
     for t in &soup.f {
         for k in 0..3 {
             let (a, b) = (t[k] as u32 as u64, t[(k + 1) % 3] as u32 as u64);
@@ -47,7 +47,7 @@ fn has_open_edges(soup: &TriSoup) -> bool {
 }
 
 fn open_edge_count(p: &PolyMesh) -> i32 {
-    let mut ec: HashMap<u64, i32> = HashMap::new();
+    let mut ec: HashMap<u64, i32> = HashMap::default();
     let mut at = 0usize;
     for &sz in &p.sizes {
         let sz = sz as usize;
@@ -79,7 +79,7 @@ fn long_feature_chains(soup: &TriSoup, requested: i32) -> (Vec<[i32; 2]>, Vec<[V
     let mut parent: Vec<usize> = (0..soup.p.len()).collect();
     fn find(p: &mut Vec<usize>, mut x: usize) -> usize { while p[x] != x { p[x] = p[p[x]]; x = p[x]; } x }
     for e in &soup.features { let (a, b) = (find(&mut parent, e[0] as usize), find(&mut parent, e[1] as usize)); parent[a] = b; }
-    let mut chain: HashMap<usize, f64> = HashMap::new();
+    let mut chain: HashMap<usize, f64> = HashMap::default();
     for e in &soup.features {
         let r = find(&mut parent, e[0] as usize);
         *chain.entry(r).or_insert(0.0) += soup.p[e[0] as usize].distance(soup.p[e[1] as usize]);
@@ -97,14 +97,14 @@ fn long_feature_chains(soup: &TriSoup, requested: i32) -> (Vec<[i32; 2]>, Vec<[V
         let key = |p: Vec3| ((p.x / cell).floor() as i64, (p.y / cell).floor() as i64, (p.z / cell).floor() as i64);
         let mid: Vec<Vec3> = soup.features.iter().map(|e| (soup.p[e[0] as usize] + soup.p[e[1] as usize]) * 0.5).collect();
         let len: Vec<f64> = soup.features.iter().map(|e| soup.p[e[0] as usize].distance(soup.p[e[1] as usize])).collect();
-        let mut grid: HashMap<(i64, i64, i64), Vec<usize>> = HashMap::new();
+        let mut grid: HashMap<(i64, i64, i64), Vec<usize>> = HashMap::default();
         for i in 0..n { if keep[i] { grid.entry(key(mid[i])).or_default().push(i); } }
         // vertex -> incident kept edges, to measure how far apart two edges are along the chain
-        let mut inc: HashMap<i32, Vec<usize>> = HashMap::new();
+        let mut inc: HashMap<i32, Vec<usize>> = HashMap::default();
         for i in 0..n { if keep[i] { for v in soup.features[i] { inc.entry(v).or_default().push(i); } } }
         let hop_limit = 6;
         let near_along = |i: usize| -> Vec<usize> {
-            let mut seen: HashSet<usize> = HashSet::new();
+            let mut seen: HashSet<usize> = HashSet::default();
             seen.insert(i);
             let mut frontier = vec![i];
             for _ in 0..hop_limit {
@@ -139,12 +139,12 @@ fn long_feature_chains(soup: &TriSoup, requested: i32) -> (Vec<[i32; 2]>, Vec<[V
             if partner[i].is_none() { continue; }
             for v in soup.features[i] { for &g in &inc[&v] { if partner[g].is_some() { let (a, b) = (root(&mut par2, i), root(&mut par2, g)); par2[a] = b; } } }
         }
-        let mut run_len: HashMap<usize, f64> = HashMap::new();
+        let mut run_len: HashMap<usize, f64> = HashMap::default();
         for i in 0..n { if partner[i].is_some() { let r = root(&mut par2, i); *run_len.entry(r).or_insert(0.0) += len[i]; } }
-        let mut dropped_run: HashSet<usize> = HashSet::new();
+        let mut dropped_run: HashSet<usize> = HashSet::default();
         let mut order: Vec<usize> = run_len.keys().copied().collect();
         order.sort_by(|a, b| run_len[a].partial_cmp(&run_len[b]).unwrap().then(a.cmp(b))); // shortest first
-        let mut pairs: HashMap<usize, HashSet<usize>> = HashMap::new();
+        let mut pairs: HashMap<usize, HashSet<usize>> = HashMap::default();
         for i in 0..n { if let Some(j) = partner[i] { let (a, b) = (root(&mut par2, i), if partner[j].is_some() { root(&mut par2, j) } else { usize::MAX }); if b != usize::MAX && a != b { pairs.entry(a).or_default().insert(b); } else if b == usize::MAX { pairs.entry(a).or_default().insert(usize::MAX); } } }
         for r in order {
             // drop this run if it faces a longer run that is still kept, or an unmarked-partner (shouldn't happen)

@@ -3,6 +3,7 @@
 
 //! FORGE command line (Rust port, work in progress).
 mod cli;
+mod det;
 mod io;
 mod math;
 mod mesh;

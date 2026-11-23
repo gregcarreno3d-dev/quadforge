@@ -22,7 +22,8 @@ use crate::stages::amg::{Amg, Csr};
 use crate::stages::field::FaceFrames;
 use crate::math::Cplx;
 use crate::util::parallel::par_fill;
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
+use crate::det::{HashMap};
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::time::Instant;
 
@@ -281,7 +282,7 @@ impl Topology {
                     if first_cut[v] < 0 { first_cut[v] = e as i32; } else { let fc = first_cut[v] as usize; let r = sp.find(fc); let re = sp.find(e); sp.0[re] = r; }
                 }
             }
-            let mut seg_id: HashMap<usize, usize> = HashMap::new();
+            let mut seg_id: HashMap<usize, usize> = HashMap::default();
             let mut n_cut = 0usize;
             for e in 0..n_e {
                 if !t.cut[e] { continue; }
@@ -335,7 +336,7 @@ impl Topology {
             par.union(nxt(c0) as usize, prv(d0) as usize);
             par.union(prv(c0) as usize, nxt(d0) as usize);
         }
-        let mut id: HashMap<usize, i32> = HashMap::new();
+        let mut id: HashMap<usize, i32> = HashMap::default();
         let mut n_s = 0i32;
         for c in 0..n_c {
             if !m.falive[c / 3] { continue; }
@@ -828,7 +829,7 @@ impl<'a> IntegerParam<'a> {
         if !feat_vars.is_empty() {
             feat_vars.sort_unstable();
             feat_vars.dedup();
-            let mut gid: HashMap<usize, usize> = HashMap::new();
+            let mut gid: HashMap<usize, usize> = HashMap::default();
             let mut groups: Vec<Vec<usize>> = Vec::new();
             for &v in &feat_vars {
                 let r = fdsu.find(v);

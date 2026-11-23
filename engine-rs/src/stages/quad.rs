@@ -17,7 +17,7 @@ use crate::stages::field::{axis_from_z, build_frames, solve_cross_field, FaceFra
 use crate::stages::remesh::ProgressFn;
 use crate::stages::repair::edge_key;
 use crate::util::parallel::par_fill;
-use std::collections::HashMap;
+use crate::det::HashMap;
 use std::time::Instant;
 
 pub struct QuadParams {
@@ -325,7 +325,7 @@ impl<'a> Quadifier<'a> {
         self.p = m.p.clone();
         self.vtype = m.vtype.clone();
         self.p.truncate(m.num_vert_slots() as usize);
-        let mut mid: HashMap<u64, i32> = HashMap::with_capacity(polys.len() * 3);
+        let mut mid: HashMap<u64, i32> = HashMap::with_capacity_and_hasher(polys.len() * 3, Default::default());
         self.q.clear();
         self.quad_source.clear();
         for poly in &polys {

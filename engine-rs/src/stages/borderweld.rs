@@ -4,7 +4,7 @@ use crate::io::fmesh::PolyMesh;
 use crate::math::Vec3;
 use crate::mesh::bvh::{SegmentIndex, SurfaceIndex};
 use crate::stages::capping::CapInfo;
-use std::collections::{HashMap, HashSet};
+use crate::det::{HashMap, HashSet};
 
 fn ukey(a: i32, b: i32) -> u64 {
     let (a, b) = if a > b { (b, a) } else { (a, b) };
@@ -55,7 +55,7 @@ pub fn drop_cap_quads(quads: &PolyMesh, lines: &SegmentIndex, cap_idx: &SurfaceI
 /// kept only if it is still a clean manifold.
 pub fn weld_short_edges(quads: PolyMesh, lines: &SegmentIndex, rho: f64) -> PolyMesh {
     let dbg = std::env::var_os("FORGE_DBG").is_some();
-    let mut seen: HashSet<u64> = HashSet::new();
+    let mut seen: HashSet<u64> = HashSet::default();
     let mut sum = 0.0;
     let mut edge_list: Vec<[i32; 2]> = Vec::new();
     let mut a1 = 0usize;
@@ -119,7 +119,7 @@ pub fn weld_short_edges(quads: PolyMesh, lines: &SegmentIndex, rho: f64) -> Poly
         }
     }
     // clean: no directed edge used twice
-    let mut dir: HashMap<u64, i32> = HashMap::new();
+    let mut dir: HashMap<u64, i32> = HashMap::default();
     let mut clean = true;
     let mut a3 = 0usize;
     for &sz in &w.sizes {

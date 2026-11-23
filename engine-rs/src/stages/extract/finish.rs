@@ -8,7 +8,7 @@ use crate::math::Vec3;
 use crate::mesh::bvh::{SegmentIndex, SurfaceIndex};
 use crate::stages::quadopt::{optimize_poles, QuadOptStats};
 use crate::stages::quadquality::{improve_quads, QuadQualityStats};
-use std::collections::{HashMap, HashSet};
+use crate::det::{HashMap, HashSet};
 
 fn env_i(name: &str, default: i32) -> i32 { std::env::var(name).ok().and_then(|s| s.trim().parse().ok()).unwrap_or(default) }
 fn env_set(name: &str) -> bool { std::env::var_os(name).is_some() }
@@ -68,7 +68,7 @@ fn rotate_to(mut q: [i32; 4], v: i32) -> [i32; 4] {
 /// Every polygon becomes quads (n-gon -> n quads around its centre).
 fn subdivide_polygons(poly: &PolyMesh, cfeat: &[u8], feat: &SegmentIndex, rho: f64) -> Quads {
     let mut s = Quads { p: poly.p.clone(), f: Vec::new(), feat: cfeat.to_vec() };
-    let mut mid: HashMap<u64, i32> = HashMap::new();
+    let mut mid: HashMap<u64, i32> = HashMap::default();
     let ladder = !env_set("FORGE_NOLADDER");
     // A polygon that touches itself at a vertex is cut at that vertex into simple loops.
     let mut polys: Vec<Vec<i32>> = Vec::new();
@@ -196,7 +196,7 @@ fn collapse_thin_strips(s: &mut Quads, ratio: f64) {
             else if sh[1] && sh[3] && !sh[0] && !sh[2] { cand[qi] = 1; }
         }
         // quads per edge
-        let mut eq: HashMap<u64, Vec<usize>> = HashMap::new();
+        let mut eq: HashMap<u64, Vec<usize>> = HashMap::default();
         for (qi, q) in s.f.iter().enumerate() { for k in 0..4 { eq.entry(edge_key(q[k], q[(k + 1) % 4])).or_default().push(qi); } }
         // chains of candidates linked through shared short edges
         let mut parent: Vec<usize> = (0..nq).collect();
@@ -213,7 +213,7 @@ fn collapse_thin_strips(s: &mut Quads, ratio: f64) {
             }
         }
         // a chain is a closed loop when every one of its short edges is shared by exactly two quads of the chain
-        let mut ok_chain: HashMap<usize, bool> = HashMap::new();
+        let mut ok_chain: HashMap<usize, bool> = HashMap::default();
         for qi in 0..nq {
             if cand[qi] < 0 { continue; }
             let r = find(&mut parent, qi);
@@ -224,7 +224,7 @@ fn collapse_thin_strips(s: &mut Quads, ratio: f64) {
             }
         }
         if dbg() {
-            let mut len: HashMap<usize, usize> = HashMap::new();
+            let mut len: HashMap<usize, usize> = HashMap::default();
             for qi in 0..nq { if cand[qi] >= 0 { *len.entry(find(&mut parent, qi)).or_insert(0) += 1; } }
             let closed = ok_chain.values().filter(|&&v| v).count();
             let mut open_len: Vec<usize> = ok_chain.iter().filter(|(_, &v)| !v).map(|(r, _)| len[r]).collect();
@@ -249,7 +249,7 @@ fn collapse_thin_strips(s: &mut Quads, ratio: f64) {
         if !ok_chain.values().any(|&v| v) { return; }
         let mut dsu: Vec<usize> = (0..s.p.len()).collect();
         let mut dead = vec![false; nq];
-        let mut vert_chain: HashMap<usize, usize> = HashMap::new();
+        let mut vert_chain: HashMap<usize, usize> = HashMap::default();
         let mut collapsed = 0;
         for qi in 0..nq {
             if cand[qi] < 0 { continue; }
@@ -325,8 +325,8 @@ fn collapse_thin_strips(s: &mut Quads, ratio: f64) {
             nq_list.push(out);
         }
         // the welded mesh must stay a clean manifold
-        let mut ec: HashMap<u64, i32> = HashMap::new();
-        let mut dir: HashSet<u64> = HashSet::new();
+        let mut ec: HashMap<u64, i32> = HashMap::default();
+        let mut dir: HashSet<u64> = HashSet::default();
         let mut clean = true;
         for q in &nq_list {
             for k in 0..4 {
@@ -395,7 +395,7 @@ fn replace_stars(s: &mut Quads, reference: &SurfaceIndex) {
     let f4 = s.f.clone();
     let inc = s.incident();
     // boundary vertices of the quad mesh (an edge used once)
-    let mut ecount: HashMap<u64, i32> = HashMap::new();
+    let mut ecount: HashMap<u64, i32> = HashMap::default();
     for q in &f4 { for k in 0..4 { *ecount.entry(edge_key(q[k], q[(k + 1) & 3])).or_insert(0) += 1; } }
     let mut on_border = vec![false; nvs];
     for (k, &c) in &ecount { if c == 1 { on_border[(k >> 32) as usize] = true; on_border[(k & 0xffff_ffff) as usize] = true; } }

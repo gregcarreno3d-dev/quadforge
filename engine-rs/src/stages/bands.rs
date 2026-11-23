@@ -11,7 +11,7 @@
 //! Needs no feature marks: it works directly on the triangulated CAD mesh (STL).
 use crate::io::fmesh::PolyMesh;
 use crate::math::Vec3;
-use std::collections::HashMap;
+use crate::det::HashMap;
 
 #[derive(Clone, Debug)]
 pub struct BandParams {
@@ -142,7 +142,7 @@ fn detect_one(m: &PolyMesh, prm: &BandParams) -> BandReport {
     }
     let diag = (hi - lo).length().max(1e-12);
     let eps = diag * 1e-6;
-    let mut keymap: HashMap<(i64, i64, i64), u32> = HashMap::new();
+    let mut keymap: HashMap<(i64, i64, i64), u32> = HashMap::default();
     let mut wp: Vec<Vec3> = Vec::new();
     let mut remap = vec![0u32; m.p.len()];
     for (i, p) in m.p.iter().enumerate() {
@@ -172,7 +172,7 @@ fn detect_one(m: &PolyMesh, prm: &BandParams) -> BandReport {
     }
     // ---- adjacency: adj[f][i] = neighbour across edge (t[i], t[i+1]) or -1; elen = edge length
     let ekey = |a: u32, b: u32| -> u64 { let (x, y) = if a < b { (a, b) } else { (b, a) }; ((x as u64) << 32) | y as u64 };
-    let mut emap: HashMap<u64, Vec<i32>> = HashMap::new();
+    let mut emap: HashMap<u64, Vec<i32>> = HashMap::default();
     for (f, t) in tv.iter().enumerate() {
         for i in 0..3 { emap.entry(ekey(t[i], t[(i + 1) % 3])).or_default().push(f as i32); }
     }
@@ -296,7 +296,7 @@ fn detect_one(m: &PolyMesh, prm: &BandParams) -> BandReport {
     // two strips belong to the same band when they run side by side (long shared contact), turn gently
     // across it and have similar widths; strips meeting end to end (a wall and a ring) stay apart.
     let mut par: Vec<usize> = (0..nreg).collect();
-    let mut contact: HashMap<(usize, usize), f64> = HashMap::new();
+    let mut contact: HashMap<(usize, usize), f64> = HashMap::default();
     for f in 0..nf {
         for i in 0..3 {
             let g = adj[f][i];
@@ -355,7 +355,7 @@ fn detect_one(m: &PolyMesh, prm: &BandParams) -> BandReport {
         // distance from the band boundary: multi-source Dijkstra over the band's faces, remembering which boundary
         // edge is nearest. Where two faces whose nearest edges are far apart meet (the ridge along the middle of the
         // band), those two edges lie on opposite flanks: they give the pairs used to measure turn and neighbours.
-        let mut local: HashMap<usize, usize> = HashMap::new();
+        let mut local: HashMap<usize, usize> = HashMap::default();
         for (k, &f) in faces.iter().enumerate() { local.insert(f, k); }
         // nearest boundary edge of every face centroid (exact point-to-segment distance, so long skinny triangles
         // are measured across the band, not along it)
@@ -379,7 +379,7 @@ fn detect_one(m: &PolyMesh, prm: &BandParams) -> BandReport {
         let w0 = 2.0 * a_sum / l_out;
         let (mut tsum, mut tw) = (0.0, 0.0);
         let mut cvx = 0.0;
-        let mut used: std::collections::HashSet<usize> = std::collections::HashSet::new();
+        let mut used: crate::det::HashSet<usize> = crate::det::HashSet::default();
         let mut sizes: Vec<f64> = Vec::new();
         let mut wsum = 0.0;
         let mut same_flank = 0.0;
@@ -463,7 +463,7 @@ fn detect_one(m: &PolyMesh, prm: &BandParams) -> BandReport {
         let mut any = false;
         for f in 0..nf {
             if snap[f] >= 0 || !(curved[f] || corner[f]) { continue; }
-            let mut acc: HashMap<i32, f64> = HashMap::new();
+            let mut acc: HashMap<i32, f64> = HashMap::default();
             for i in 0..3 {
                 let g = adj[f][i];
                 if g < 0 || snap[g as usize] < 0 || dih[f][i] >= prm.sharp_deg { continue; }
