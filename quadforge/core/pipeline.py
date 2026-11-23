@@ -977,6 +977,10 @@ def _tidy_seam(bm, plan: sym.SymmetryPlan, settings) -> None:
     def _run(target) -> None:
         _remove_degenerate_geometry(target)
         if settings.output == "QUADS":
+            bm_index = getattr(target, "verts", None)
+            if bm_index is not None:
+                target.verts.index_update()
+                _remove_pillows(target)
             for _ in range(3):      # a corner next to another one is left for the next round
                 if not _dissolve_seam_corners(target, plan if plan.is_active else None):
                     break
@@ -1117,6 +1121,27 @@ def _quad_min_corner_sine(points) -> float:
         denominator = a.length * b.length
         worst = min(worst, a.cross(b).length / denominator if denominator > 1e-30 else 0.0)
     return worst
+
+
+def _remove_pillows(bm) -> int:
+    """Delete "pillows": two faces on the very same vertices whose edges belong to nothing else, a closed flat sandwich the
+    engine can leave where a strip collapses to zero width (Cylinder Ver-01 at 5K had five). It can hang from the mesh by
+    one corner. Returns the number of faces removed."""
+    seen: dict = {}
+    for face in bm.faces:
+        seen.setdefault(frozenset(v.index for v in face.verts), []).append(face)
+    doomed_faces, doomed_verts = [], []
+    for faces in seen.values():
+        if len(faces) != 2:
+            continue
+        verts = faces[0].verts
+        if all(len(e.link_faces) == 2 for e in faces[0].edges):      # every edge belongs to the two faces only
+            doomed_faces.extend(faces)
+            doomed_verts.extend(verts)
+    if doomed_faces:
+        bmesh.ops.delete(bm, geom=doomed_faces, context="FACES")
+        bmesh.ops.delete(bm, geom=[v for v in set(doomed_verts) if v.is_valid and not v.link_faces], context="VERTS")
+    return len(doomed_faces)
 
 
 def _dissolve_seam_corners(bm, plan: sym.SymmetryPlan | None) -> int:
@@ -1428,7 +1453,7 @@ def run_steps(context, original, settings: RemeshSettings,
         return result
     target = settings.target_quads
     best, floor = result, 0.0
-    count_tried = fine_tried = plain_tried = False
+    count_tried = fine_tried = plain_tried = rigid_tried = False
     while True:
         first = best.levels[0]
         faces = len(first.object.data.polygons)
@@ -1447,11 +1472,18 @@ def run_steps(context, original, settings: RemeshSettings,
             # the refinement of strips can itself tear a rounded rim (hole rims of a disc): try the plain sizes once
             plain_tried = True
             retry = dataclasses.replace(settings, soft_bevel_detail=1.0, thin_band_floor=floor)
+        elif (not rigid_tried and settings.use_surface_analysis and settings.soft_bevels
+              and (_layout_flaws(first.object.data) / max(1, faces) > PLAIN_RETRY_FLAW_SHARE
+                   or _worst_flaw_cluster(first.object.data)[0] >= THIN_WARNING_CLUSTER)):
+            # the rows along shallow-facet bevels can sit one row off the neighbouring face: a flat corner at a valence-3
+            # vertex on the crease (82 of the 155 untidy faces of Cylinder Ver-01 at 5K). Without that detection they do not.
+            rigid_tried = True
+            retry = dataclasses.replace(settings, soft_bevels=False, thin_band_floor=0.0)
         else:
             _warn_thin_strips(best, target, settings)
             return best
         if os.environ.get("QUADFORGE_PROFILE"):
-            print(f"   retry: count={count_tried} fine={fine_tried} plain={plain_tried} faces={faces} flaws={_layout_flaws(first.object.data)}", file=sys.stderr)
+            print(f"   retry: count={count_tried} fine={fine_tried} plain={plain_tried} rigid={rigid_tried} faces={faces} flaws={_layout_flaws(first.object.data)}", file=sys.stderr)
         second_result = yield from _run_steps_once(context, original, retry, progress)
         second = second_result.levels[0]
         if os.environ.get("QUADFORGE_PROFILE"):

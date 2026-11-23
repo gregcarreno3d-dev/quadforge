@@ -2,13 +2,13 @@
 
 See `EXPERIMENT_LOG.md` for the short list of what was tried, kept and rejected.
 
-## Current status (0.18.8)
+## Current status (0.18.9)
 - **Surface analysis and chamfer/bevel detection (preview).** Tested on real CAD parts (a cylinder plate, a perforated plate, a flange, a spool-like part) and on synthetic parts (prisms, frustums, a tilted frustum, a UV sphere, a bracket with a tilted hole, a six-hole flange, a dome, a cone on a cylinder, an off-centre boss). Unit tests live in `engine-rs/src/stages/surfaces.rs`; the Blender test is `tests/blender_surfaces_test.py`.
 - **Known limits of the analysis:** surfaces of revolution are searched only about the X, Y and Z axes through the centre of the model; fillets made of very thin facets and coarse 3-facet fillets are only partly detected; with *Use Surface Analysis* about 2 % of the faces can stay triangles (isolated ones in the quad flow); the detector is in the Linux engine checked into the repository, and in Windows / macOS builds made by CI.
 - **Speed on CAD parts:** a plate with a strong size variation falls back after the second attempt (about 12 s instead of 26 s at 4K quads).
 
 ## Tested
-- 0.18.8: unit tests (regularize, surface smooth, geometry) and the Blender surfaces, surface and bundle suites pass; Test Object Ver-04 at 6K passes the battery with and without the regularization (same counts); surface regions on Ver-04 90 -> 38 (small ones 39 -> 10); Cylinder Ver-03 and the gear (Ver-05) unchanged and correct
+- 0.18.9: unit tests (regularize, surface smooth, geometry) and the Blender surfaces, surface and bundle suites pass; Test Object Ver-04 at 6K passes the battery with and without the regularization (same counts); surface regions on Ver-04 90 -> 38 (small ones 39 -> 10); Cylinder Ver-03 and the gear (Ver-05) unchanged and correct
 - 0.18.6: ui, reload, bundle, relax, ngon, hard, integration (26 of 26), surfaces, zones, guides, head pass; an operator remesh on Test Object Ver-04 at 30K calls the relaxation
 - 0.18.2: all Blender and Python suites pass (hard, integration 26 of 26, surfaces, bevel, forge, form_detail, zone_detail, zones, guides, head, preview, subdiv, uv, vgzones, surface, ui, ngon, relax, row_fit; matrix quick set 23 of 23); CAD battery at 30K, no symmetry: 8 of 8 real parts and 20 of 20 synthetic parts
 - 0.18.1: all Blender and Python suites pass (hard, integration, surfaces, bevel, forge, form_detail, zone_detail, zones, guides, head, preview, subdiv, uv, vgzones, surface, ui, ngon, row_fit; matrix quick set 23 of 23), engine tests 7 of 7, battery on the 20 synthetic parts at 30K (26 of 26 with the real parts) and on the eight polygon parts at 30K (8 of 8).
@@ -17,13 +17,14 @@ See `EXPERIMENT_LOG.md` for the short list of what was tried, kept and rejected.
 - Python backend with the real engine through a simulated mesh.
 - Windows and macOS binaries are built natively by CI and pass the engine tests there; real-machine use is still limited.
 
-## Long-range battery on the symmetric test parts (0.18.8, 2 CPU cores, `tools/corpus_real`)
+## Long-range battery on the symmetric test parts (0.18.9, 2 CPU cores, `tools/corpus_real`)
 
 | Set | Target | Passed |
 |---|---|---|
 | 8 parts, no symmetry | 20K | 8 of 8 |
-| 8 parts, no symmetry | 5K | 7 of 8 (Cylinder Ver-01: 3.6 % squeezed quads along its thin chamfer rings; 6K gives 3.3 %, 7K passes with 0.19 %) |
-| 8 parts, no symmetry | 1.5K | 4 of 8 |
+| 8 parts, no symmetry | 5K, 3.5K | 8 of 8 |
+| 8 parts, no symmetry | 2.5K | 7 of 8 (Test Object Ver-04: 6.1 % untidy faces) |
+| 8 parts, no symmetry | 1.5K | not rerun since 0.18.8 (4 of 8 then) |
 | `sym/` (4 parts mirrored in X), symmetry X | 10K, 40K | 4 of 4 |
 | `sym/`, symmetry X | 2.5K | 2 of 4 (Cylinder Ver-01, Test Object Ver-04: 7-10 % untidy faces) |
 
@@ -377,8 +378,10 @@ Where: `engine-rs/src/pipeline.rs::long_feature_chains` (`FORGE_THINFEAT`, cells
 Per part: Cylinder_Ver-01 362 / 289 / 63, Test_Object_Ver-01 171 / 482 / 109. Non-monotonic, so the choice is a compromise; a real fix keeps one line of the pair but pins the other to the same row (ring constraint). Next.
 
 
-## Measured after 0.18.8 (development)
+## Measured for 0.18.9
 - The engine result does not depend on the thread count: the 8 parts at 5K give byte-identical meshes with 1, 2 and 10 threads. A difference between a 10-core computer and the cloud's 2 cores is not a thread effect.
 - Reruns (`run_steps`): up to three extra engine runs when the count is off or the layout is untidy; each is kept only when better. On symmetric parts at 10K that is 3 to 4 runs (Cylinder Ver-01: 29 s for 6 s of engine time), which is where the slowness of Cylinder Ver-03 with symmetry comes from. Tried and rejected: extra runs asking for 0.94x, 1.06x of the request (no gain, +20 s).
 - Seam triangles on Test Object Ver-04 with symmetry X at 10K: 24 of 10 223 faces (0.2 %), 22 of them in mirrored pairs on the plane; lowering the shape gate of `_merge_seam_triangle_pairs` from 0.2 to 0.08 removes only 2, so it stays.
 - Pinched corners (a vertex with only two edges, which the engine leaves where a chamfer is thinner than a cell) are now dissolved after the engine: 20 of them on Cylinder Ver-01 at 5K before, none now (`_dissolve_seam_corners`, plan None).
+- **Pillows** (two faces on the same four vertices whose edges belong to nothing else, sometimes hanging from the mesh by one corner) were the vertices with two edges: Cylinder Ver-01 had five of them. `_remove_pillows` deletes them after the engine.
+- **Soft-bevel detection can leave a flat corner at a valence-3 vertex on the crease** (82 of the 155 untidy faces of Cylinder Ver-01 at 5K: the rows along a shallow-facet bevel sit one row off the neighbouring face). The rerun `rigid` (soft bevels off) is tried last when the layout is untidy and kept only when better. On the 8 parts: 5K 8 of 8 (was 7), 3.5K 8 of 8, 2.5K 7 of 8, 20K 8 of 8; `sym/` 10K 4 of 4. Soft bevels off for everything is not better: at 20K Test Object Ver-04 lands 10 % over the requested count.
