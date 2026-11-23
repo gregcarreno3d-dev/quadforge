@@ -309,6 +309,7 @@ With `use_surface_analysis` and quad output, `pipeline._join_leftover_triangles`
 
 1. **The original object is never modified.** All work happens on copies registered in `TemporaryData`.
 2. **The engine runs out of process.** Never load engine code into Blender. Never block the UI: use the generator.
+   - **The engine is deterministic.** Use `crate::det::{HashMap, HashSet}` (fixed hasher), never `std::collections::HashMap`: the standard one is seeded randomly and the same model gave different results on each run.
 3. **No `bpy`, `bmesh` or `mathutils` import at module level** in `core/backends/forge.py`, `core/features.py`,
    `core/geometry.py`, `core/mesh_io.py`, `core/forge_io.py`, `planning.py` and `guidance.py`, so they stay testable
    without Blender (`pipeline.py`, `symmetry.py`, `detail.py` and the UI do import it).
