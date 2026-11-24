@@ -72,7 +72,7 @@ SYMMETRY_MATCH_WARNING_THRESHOLD = 0.9    # warn if fewer than 90% of sampled po
 WORK_OBJECT_NAME = "QuadForge_work"
 DENSITY_ATTRIBUTE = "quadforge_density"
 FORM_DETAIL_RATIOS = {"LOW": 1.8, "MEDIUM": 2.5, "HIGH": 3.5}   # Detail on Curves: edge length ratio between flat and sharply bent areas
-FORM_DETAIL_SYMMETRY_SHARE = 0.5                    # with symmetry the Detail on Curves ratio is reduced to this share of its excess over 1
+FORM_DETAIL_SYMMETRY_SHARE = 0.75                                      # with symmetry the Detail on Curves ratio is reduced to this share of its excess over 1
 CURVATURE_ANGLES = {"OFF": 0.0, "LOW": 0.35, "MEDIUM": 0.22, "HIGH": 0.15}   # radians a face edge may turn the surface
 
 
