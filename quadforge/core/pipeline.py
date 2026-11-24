@@ -1183,7 +1183,7 @@ def _dissolve_seam_corners(bm, plan: sym.SymmetryPlan | None) -> int:
         if {loop_b[1], loop_b[3]} != {loop_a[1], loop_a[3]}:
             continue
         merged = [loop_a[1], loop_a[2], loop_a[3], loop_b[2]]
-        if _quad_min_corner_sine([vertex.co for vertex in merged]) < 0.12:
+        if _quad_min_corner_sine([vertex.co for vertex in merged]) < 0.08:
             continue                    # the diamond would be a flattened, folded quad: leave the pair as it is
         try:
             face = bm.faces.new(merged)
@@ -1406,8 +1406,8 @@ def _badness(mesh, target: int) -> float:
     edge_vertices = np.empty(len(mesh.edges) * 2, dtype=np.int64)
     mesh.edges.foreach_get("vertices", edge_vertices)
     valence = np.bincount(edge_vertices, minlength=len(mesh.vertices))
-    corners = int(np.count_nonzero(valence == 2))      # a vertex with two edges (a corner left on a seam) is always a defect
-    return max(0.0, count_error - COUNT_TOLERANCE) * 10.0 + _layout_flaws(mesh) / faces + (1.0 if corners else 0.0)
+    corners = int(np.count_nonzero(valence == 2))      # a vertex with two edges (a corner left on a seam) is a defect worth three untidy faces
+    return max(0.0, count_error - COUNT_TOLERANCE) * 10.0 + (_layout_flaws(mesh) + 3 * corners) / faces
 
 
 THIN_WARNING_FLAW_SHARE = 0.03                      # warn when more than this share of the finished faces are flaws
@@ -1453,7 +1453,7 @@ def run_steps(context, original, settings: RemeshSettings,
         return result
     target = settings.target_quads
     best, floor = result, 0.0
-    count_tried = fine_tried = plain_tried = rigid_tried = False
+    count_tried = fine_tried = plain_tried = rigid_tried = kept_cheap = False
     while True:
         first = best.levels[0]
         faces = len(first.object.data.polygons)
@@ -1461,10 +1461,6 @@ def run_steps(context, original, settings: RemeshSettings,
             count_tried = True
             requested = max(1000, round(target * (0.5 + 0.5 * target / max(1, faces))))
             retry = dataclasses.replace(settings, target_quads=requested, thin_band_floor=floor)
-        elif (not fine_tried and settings.use_surface_analysis and settings.soft_bevels and settings.soft_bevel_detail < 1.0
-              and _layout_flaws(first.object.data) / max(1, faces) > SECOND_CHANCE_FLAW_SHARE):
-            fine_tried = True
-            retry = dataclasses.replace(settings, thin_band_floor=THIN_BAND_FINE_FLOOR)
         elif (not plain_tried and not os.environ.get("QUADFORGE_NO_PLAIN_RETRY") and settings.use_surface_analysis and settings.soft_bevels and settings.output == "QUADS"
               and settings.soft_bevel_detail < 1.0 and (
                   _layout_flaws(first.object.data) / max(1, faces) > PLAIN_RETRY_FLAW_SHARE
@@ -1479,6 +1475,10 @@ def run_steps(context, original, settings: RemeshSettings,
             # vertex on the crease (82 of the 155 untidy faces of Cylinder Ver-01 at 5K). Without that detection they do not.
             rigid_tried = True
             retry = dataclasses.replace(settings, soft_bevels=False, thin_band_floor=0.0)
+        elif (not fine_tried and settings.use_surface_analysis and settings.soft_bevels and settings.soft_bevel_detail < 1.0 and not kept_cheap
+              and _layout_flaws(first.object.data) / max(1, faces) > SECOND_CHANCE_FLAW_SHARE):
+            fine_tried = True
+            retry = dataclasses.replace(settings, thin_band_floor=THIN_BAND_FINE_FLOOR)
         else:
             _warn_thin_strips(best, target, settings)
             return best
@@ -1495,6 +1495,8 @@ def run_steps(context, original, settings: RemeshSettings,
             second.object.data.name = name
             second.target_quads = target
             best, floor = second_result, retry.thin_band_floor
+            if retry.soft_bevel_detail >= 1.0 or not retry.soft_bevels:
+                kept_cheap = True       # the finer strips rerun (slow, 20-80 s) is only for what the cheap reruns did not fix
             if retry.soft_bevel_detail >= 1.0:
                 settings = dataclasses.replace(settings, soft_bevel_detail=1.0)   # later reruns keep the plain sizes
         else:

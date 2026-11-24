@@ -6,6 +6,8 @@ chamfer, bevel). The borders between surfaces are listed with their kind (sharp,
 from __future__ import annotations
 
 import json
+import time
+import os
 import subprocess
 import sys
 import tempfile
@@ -54,7 +56,10 @@ def analyze_arrays(co: np.ndarray, sizes: np.ndarray, idx: np.ndarray, max_width
         if max_width_units > 0:
             cmd += ["--max-width", f"{max_width_units:.6g}"]
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if sys.platform.startswith("win") else 0
+        began = time.monotonic()
         done = subprocess.run(cmd, capture_output=True, text=True, creationflags=flags)
+        if os.environ.get("QUADFORGE_PROFILE"):
+            print(f"   surfaces engine call: {time.monotonic() - began:.1f} s", file=sys.stderr)
         if done.returncode != 0 or not out.is_file():
             raise SurfaceError((done.stdout + done.stderr).strip() or "the engine did not answer (older engine without surface analysis?)")
         report = json.loads(out.read_text())

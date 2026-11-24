@@ -23,8 +23,8 @@ See `EXPERIMENT_LOG.md` for the short list of what was tried, kept and rejected.
 |---|---|---|
 | 8 parts, no symmetry | 20K | 8 of 8 |
 | 8 parts, no symmetry | 5K, 3.5K | 8 of 8 |
-| 8 parts, no symmetry | 2.5K | 7 of 8 (Test Object Ver-04: 6.1 % untidy faces) |
-| 8 parts, no symmetry | 1.5K | not rerun since 0.18.8 (4 of 8 then) |
+| 8 parts, no symmetry | 2.5K | 8 of 8 (after 0.18.9: Test Object Ver-04 6.1 % -> 2.0 %) |
+| 8 parts, no symmetry | 1.5K | 4 of 8 (Cylinder Ver-03, Test Object Ver-03, Ver-04, Ver-05 above 3 %) |
 | `sym/` (4 parts mirrored in X), symmetry X | 10K, 40K | 4 of 4 |
 | `sym/`, symmetry X | 2.5K | 2 of 4 (Cylinder Ver-01, Test Object Ver-04: 7-10 % untidy faces) |
 

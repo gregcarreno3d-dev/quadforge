@@ -168,6 +168,8 @@ def run_engine_steps(command: list, progress=None):
             if not finished:
                 yield
         process.wait(timeout=30)
+        if os.environ.get("QUADFORGE_PROFILE"):
+            print(f"   engine process: {time.monotonic() - started:.1f} s", file=sys.stderr)
     finally:
         if process.poll() is None:
             process.kill()

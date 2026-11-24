@@ -2,6 +2,8 @@
 
 ## Unreleased (next)
 
+- **Faster reruns, same results**: the slow rerun with much finer rows along strips (20-80 s on its own) now runs last and only when the cheap ones (plain sizes, soft bevels off, 3-5 s each) did not tidy the layout. Cylinder Ver-03 at 3.5K: 84 s -> 12 s with the same mesh.
+- **Test Object Ver-04 at 2.5K passes** (6.1 % -> 2.0 % untidy faces): one vertex with two edges between two quads was left by a corner gate of 0.12 (its merged quad scored 0.116) and, with the old fixed penalty of 1.0 per such vertex, hid the better rerun. The gate is 0.08 and a vertex with two edges now costs three untidy faces in the comparison of reruns (`_badness`). 8 parts: 2.5K, 3.5K, 5K, 20K 8 of 8; symmetric parts 10K 4 of 4; 1.5K 4 of 8.
 - Open work: green tooth on the rounded end of Test Object Ver-04, one-surface fit of rounded ends, Cylinder Ver-03 is slow with symmetry (3-4 reruns), seam triangles of Ver-04 with symmetry X (0.2 %), Test Object Ver-04 at 2.5K, Windows/macOS validation (see `docs/STATUS_AND_LIMITS.md`).
 
 ## 0.18.9 — 2026-11-23
