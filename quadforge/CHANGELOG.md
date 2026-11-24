@@ -2,8 +2,12 @@
 
 ## Unreleased (next)
 
-- **Fix: Analyze Form colours vanished a second after painting (Soft Surface).** Blender stores a vertex group as an attribute of the same name, and the 0.18.10 colour attribute `QuadForge Form` had that name, so Blender wiped the colours on the next Edit Mode switch. Colours are now `QuadForge Form Colours`; the vertex group keeps `QuadForge Form`. Regression test (Edit Mode round trip) in `blender_form_detail_test.py`.
 - Open work: green tooth on the rounded end of Test Object Ver-04, one-surface fit of rounded ends, seam triangles of Ver-04 with symmetry X (0.2 %), 1.5K quads on detailed parts (4 of 8), a Soft Surface curvature mask that does better than Detail on Curves (see `docs/EXPERIMENT_LOG.md`), Windows/macOS validation (see `docs/STATUS_AND_LIMITS.md`).
+
+## 0.18.11 — 2026-11-24
+
+- **Fix: Analyze Form colours vanished a second after painting (Soft Surface).** Blender stores a vertex group as an attribute of the same name, and the 0.18.10 colour attribute `QuadForge Form` had that name, so Blender wiped the colours on the next Edit Mode switch. Colours are now `QuadForge Form Colours`; the vertex group keeps `QuadForge Form`. Regression test (Edit Mode round trip) in `blender_form_detail_test.py`.
+- Measured on Test Object Ver-04 (symmetry X, 28K / 30K / 32K): the knot where the lower cylinder meets the body is structural (0.30 / 0.37 / 0.32 % flawed faces at every count), so it needs the engine to treat that blend as one surface; it stays in the open work.
 
 ## 0.18.10 — 2026-11-24
 
