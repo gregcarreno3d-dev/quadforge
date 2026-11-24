@@ -507,11 +507,14 @@ current Target Faces and Detail on Curves setting. Nothing is remeshed"""
         weight = np.clip((1.0 - multiplier) / max(1.0 - 1.0 / ratio, 1e-9), 0.0, 1.0)   # 0 = normal size .. 1 = finest
         colors = np.stack([weight, 0.25 + 0.35 * (1.0 - np.abs(2.0 * weight - 1.0)), 1.0 - weight,
                            np.ones_like(weight)], axis=1).astype(np.float32)
-        attribute = mesh.color_attributes.get("QuadForge Form")
+        old = mesh.color_attributes.get("QuadForge Form")   # 0.18.10 name: clashes with the vertex group and is wiped by Edit Mode
+        if old is not None:
+            mesh.color_attributes.remove(old)
+        attribute = mesh.color_attributes.get("QuadForge Form Colours")
         if attribute is None or attribute.domain != "POINT":
             if attribute is not None:
                 mesh.color_attributes.remove(attribute)
-            attribute = mesh.color_attributes.new(name="QuadForge Form", type="FLOAT_COLOR", domain="POINT")
+            attribute = mesh.color_attributes.new(name="QuadForge Form Colours", type="FLOAT_COLOR", domain="POINT")
         attribute.data.foreach_set("color", colors.ravel())
         mesh.color_attributes.active_color = attribute
         # the same weights as an editable vertex group: paint it in Weight Paint, then pick it as the Density group
@@ -524,13 +527,20 @@ current Target Faces and Detail on Curves setting. Nothing is remeshed"""
             members = np.flatnonzero(steps == level).tolist()
             if members:
                 group.add(members, level / 50.0, "REPLACE")
+        try:
+            mesh.color_attributes.render_color_index = list(mesh.color_attributes).index(attribute)
+        except (ValueError, AttributeError):
+            pass
+        mesh.update()
         for area in context.screen.areas:
             if area.type == "VIEW_3D":
-                area.spaces[0].shading.type = "SOLID"
-                area.spaces[0].shading.color_type = "VERTEX"
+                for space in area.spaces:
+                    if space.type == "VIEW_3D":
+                        space.shading.type = "SOLID"
+                        space.shading.color_type = "VERTEX"
         finer = 100.0 * float(np.mean(weight > 0.5))
         self.report({"INFO"}, f"{finer:.0f}% of the surface gets clearly smaller faces (red); the rest keeps the normal size "
-                              "(blue). Colours are in the 'QuadForge Form' colour attribute and the weights in a vertex group of the same name: "
+                              "(blue). Colours are in the 'QuadForge Form Colours' attribute and the weights in the 'QuadForge Form' vertex group: "
                               "paint it in Weight Paint and pick it as the Density group to adjust where the detail goes.")
         return {"FINISHED"}
 
