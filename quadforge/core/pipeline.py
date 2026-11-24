@@ -733,6 +733,7 @@ BAD_QUAD_SINE = 0.3                                # a quad with a corner whose 
 SECOND_CHANCE_FLAW_SHARE = 0.03                     # a Hard Surface result with more flaws than this gets one rerun with finer strips
 FINAL_COUNT_RETRY = 0.05                            # one corrected rerun when the finished count is further than this from the request
 STRETCHED_QUAD_RATIO = 5.0                         # a quad whose longest edge is more than this many times its shortest is a flaw
+SEAM_CORNER_MIN_SINE = 0.005                        # a corner on the symmetry plane is dissolved even into a thin sliver (a vertex with two edges on the seam is worse)
 PLAIN_RETRY_FLAW_SHARE = 0.01                       # Hard Surface: more flaws than this (or a cluster) gets a rerun without strip refinement
 COUNT_TOLERANCE = 0.06                             # the engine itself lands within 4 to 6 percent: only beyond that is a count penalised
 
@@ -984,6 +985,7 @@ def _tidy_seam(bm, plan: sym.SymmetryPlan, settings) -> None:
             for _ in range(3):      # a corner next to another one is left for the next round
                 if not _dissolve_seam_corners(target, plan if plan.is_active else None):
                     break
+            _remove_degenerate_geometry(target)      # a corner dissolved into a sliver can leave a face with no area
         if plan.is_active and settings.output == "QUADS":
             _merge_seam_triangle_pairs(target, plan)
 
@@ -1183,7 +1185,7 @@ def _dissolve_seam_corners(bm, plan: sym.SymmetryPlan | None) -> int:
         if {loop_b[1], loop_b[3]} != {loop_a[1], loop_a[3]}:
             continue
         merged = [loop_a[1], loop_a[2], loop_a[3], loop_b[2]]
-        if _quad_min_corner_sine([vertex.co for vertex in merged]) < 0.08:
+        if _quad_min_corner_sine([vertex.co for vertex in merged]) < (SEAM_CORNER_MIN_SINE if plan is not None else 0.08):
             continue                    # the diamond would be a flattened, folded quad: leave the pair as it is
         try:
             face = bm.faces.new(merged)
