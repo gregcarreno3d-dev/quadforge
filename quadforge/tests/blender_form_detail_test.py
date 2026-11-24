@@ -79,6 +79,8 @@ form_colors = sphere.color_attributes.get("QuadForge Form")
 check("Analyze Form writes a colour per vertex", form_colors is not None and len(form_colors.data) == len(sphere.vertices))
 red = np.array([c.color[0] for c in form_colors.data])
 check("bumped area is red, flat area is blue", red.max() > 0.8 and red.min() < 0.2, f"{red.min():.2f}..{red.max():.2f}")
+sphere_obj = bpy.context.active_object
+check("Analyze Form writes an editable vertex group", sphere_obj.vertex_groups.get("QuadForge Form") is not None)
 check("Analyze Form does not change the mesh", len(sphere.polygons) == faces_before)
 bpy.context.scene.quadforge.curvature_detail = "OFF"
 check("Analyze Form with Detail Off is refused", bpy.ops.quadforge.analyze_form() == {"CANCELLED"})

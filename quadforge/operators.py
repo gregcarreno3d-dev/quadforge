@@ -514,13 +514,24 @@ current Target Faces and Detail on Curves setting. Nothing is remeshed"""
             attribute = mesh.color_attributes.new(name="QuadForge Form", type="FLOAT_COLOR", domain="POINT")
         attribute.data.foreach_set("color", colors.ravel())
         mesh.color_attributes.active_color = attribute
+        # the same weights as an editable vertex group: paint it in Weight Paint, then pick it as the Density group
+        group = obj.vertex_groups.get("QuadForge Form")
+        if group is not None:
+            obj.vertex_groups.remove(group)
+        group = obj.vertex_groups.new(name="QuadForge Form")
+        steps = np.round(weight * 50.0).astype(np.int32)           # 50 weight levels: one call per level, not per vertex
+        for level in range(1, 51):
+            members = np.flatnonzero(steps == level).tolist()
+            if members:
+                group.add(members, level / 50.0, "REPLACE")
         for area in context.screen.areas:
             if area.type == "VIEW_3D":
                 area.spaces[0].shading.type = "SOLID"
                 area.spaces[0].shading.color_type = "VERTEX"
         finer = 100.0 * float(np.mean(weight > 0.5))
         self.report({"INFO"}, f"{finer:.0f}% of the surface gets clearly smaller faces (red); the rest keeps the normal size "
-                              "(blue). Colours are in the 'QuadForge Form' colour attribute.")
+                              "(blue). Colours are in the 'QuadForge Form' colour attribute and the weights in a vertex group of the same name: "
+                              "paint it in Weight Paint and pick it as the Density group to adjust where the detail goes.")
         return {"FINISHED"}
 
 
