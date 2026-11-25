@@ -2,12 +2,13 @@
 
 See `EXPERIMENT_LOG.md` for the short list of what was tried, kept and rejected.
 
-## Current status (0.18.12)
+## Current status (0.18.13)
 - **Surface analysis and chamfer/bevel detection (preview).** Tested on real CAD parts (a cylinder plate, a perforated plate, a flange, a spool-like part) and on synthetic parts (prisms, frustums, a tilted frustum, a UV sphere, a bracket with a tilted hole, a six-hole flange, a dome, a cone on a cylinder, an off-centre boss). Unit tests live in `engine-rs/src/stages/surfaces.rs`; the Blender test is `tests/blender_surfaces_test.py`.
 - **Known limits of the analysis:** surfaces of revolution are searched only about the X, Y and Z axes through the centre of the model; fillets made of very thin facets and coarse 3-facet fillets are only partly detected; with *Use Surface Analysis* about 2 % of the faces can stay triangles (isolated ones in the quad flow); the detector is in the Linux engine checked into the repository, and in Windows / macOS builds made by CI.
 - **Speed on CAD parts:** a plate with a strong size variation falls back after the second attempt (about 12 s instead of 26 s at 4K quads).
 
 ## Tested
+- 0.18.13: validation round: 20K battery 8 of 8 (Balanced), Blender form_detail, UI, integration (26/26) and FORGE suites pass. 5K Precise: 5 of 8 (patch criterion), see below.
 - 0.18.12: Blender form_detail (Analyze Form colours survive an Edit Mode round trip; Speed / Precision default and pass-through), pinch and surfaces suites pass; CI green on Linux, Windows, macOS x64 and Blender 4.2 / 4.5 / 5.1 (macOS arm64 runners were cancelled for capacity several times).
 - 0.18.11: Analyze Form colour fix verified with an Edit Mode round trip in Blender 5.3.
 - 0.18.10: unit tests (regularize, surface smooth, geometry) and the Blender surfaces, surface and bundle suites pass; Test Object Ver-04 at 6K passes the battery with and without the regularization (same counts); surface regions on Ver-04 90 -> 38 (small ones 39 -> 10); Cylinder Ver-03 and the gear (Ver-05) unchanged and correct

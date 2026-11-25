@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased (next)
+## 0.18.13 — 2026-11-25
+
+Validation round (no change to the remeshing result): battery with the patch criterion, 20K Balanced 8 of 8 (largest patch 15), Blender tests (form detail, UI, integration 26/26, FORGE) all passing. 5K Precise still has three parts over the patch limit (Ver-04 48, Ver-01 26, Test Ver-01 22); Ver-04 is the boss-to-grid transition described below and needs engine work.
 
 - Diagnosis of the 5K patch on Ver-04 (48 faces): it is the transition where a small boss (about 12 mm across) meets the surrounding ring/spoke grid — 8 star-shaped valence 3/5 transitions around the boss rim, not a stray defect. The ring layout is sound; removing the stars needs engine-level work (match the number of spokes to the boss rim columns), so it stays open and the battery keeps reporting it honestly.
 
