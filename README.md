@@ -32,6 +32,7 @@ Screenshots of 0.17.0 come from runs in Blender 5.3.0 on the author's machine (t
 - Isolate zones by material, Face Set, mask or vertex group
 - Paintable density through a vertex group; smaller faces on thin parts and, optionally, on strongly curved details
 - Quick Preview before the full run, detail per zone, and an option that makes the result match your sculpt after Subdivision Surface
+- **Speed / Precision (0.18.12):** Fast (one pass), Balanced (default, cheap corrective reruns up to 100K faces) or Precise (every rerun); see the [user guide](quadforge/docs/USER_GUIDE.md)
 - **Surface analysis, chamfers and bevels (preview, 0.15 / 0.16):** splits a CAD / STL part into planes, cylinders, spheres, cones, revolution surfaces, chamfers and bevels, paints them, and lets the Hard Surface remesh keep their borders; see [below](#surface-analysis-chamfers-and-bevels-preview)
 - Exact symmetry (no open seam), several levels of detail in one run, cancel with Esc
 - English and Spanish interface

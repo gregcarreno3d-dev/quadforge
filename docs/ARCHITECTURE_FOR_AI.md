@@ -422,5 +422,6 @@ on the working mesh before calling `remesh_steps(context, obj, request)`.
 **How do I add UI text?** A constant in `texts.py`; optional Spanish entry in `translations.py`.
 
 
-## Speed / Precision (unreleased after 0.18.11)
+## Speed / Precision (0.18.12)
 `RemeshSettings.quality` (FAST | BALANCED | PRECISE; UI property `remesh_quality`, default BALANCED; dataclass default PRECISE) gates the corrective reruns in `pipeline.run_steps`. The gate is by target size and flaw share, never by elapsed time, so results stay deterministic across machines.
+Battery (`tools/cad_battery.py`): `--quality FAST|BALANCED|PRECISE` (default PRECISE) and a `patch` column = largest group of touching untidy faces (`_worst_flaw_cluster`); a patch above `CRITERIA["max_flaw_cluster"]` (20) fails the part even when the overall flaw share is tiny.

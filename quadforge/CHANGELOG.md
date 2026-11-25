@@ -2,6 +2,7 @@
 
 ## Unreleased (next)
 
+- Measured with the patch criterion (Precise, no symmetry): 20K 8 of 8, 5K 5 of 8 (patches in Cylinder Ver-01, Test Object Ver-01 and Ver-04); these patches are the next engine target.
 - Battery: new `patch` column (largest group of touching untidy faces) and a FAIL above 20, so a visible patch can no longer pass because the overall share is tiny (Cylinder Ver-01 at 30K, Fast: a patch of 106). Symmetry warning now suggests switching Symmetry off for shapes that are not symmetric. Spanish texts for Speed / Precision.
 - Open work: green tooth on the rounded end of Test Object Ver-04, one-surface fit of rounded ends, seam triangles of Ver-04 with symmetry X (0.2 %), 1.5K quads on detailed parts (4 of 8), a Soft Surface curvature mask that does better than Detail on Curves (see `docs/EXPERIMENT_LOG.md`), Windows/macOS validation (see `docs/STATUS_AND_LIMITS.md`).
 

@@ -8,6 +8,8 @@ See `EXPERIMENT_LOG.md` for the short list of what was tried, kept and rejected.
 - **Speed on CAD parts:** a plate with a strong size variation falls back after the second attempt (about 12 s instead of 26 s at 4K quads).
 
 ## Tested
+- 0.18.12: Blender form_detail (Analyze Form colours survive an Edit Mode round trip; Speed / Precision default and pass-through), pinch and surfaces suites pass; CI green on Linux, Windows, macOS x64 and Blender 4.2 / 4.5 / 5.1 (macOS arm64 runners were cancelled for capacity several times).
+- 0.18.11: Analyze Form colour fix verified with an Edit Mode round trip in Blender 5.3.
 - 0.18.10: unit tests (regularize, surface smooth, geometry) and the Blender surfaces, surface and bundle suites pass; Test Object Ver-04 at 6K passes the battery with and without the regularization (same counts); surface regions on Ver-04 90 -> 38 (small ones 39 -> 10); Cylinder Ver-03 and the gear (Ver-05) unchanged and correct
 - 0.18.6: ui, reload, bundle, relax, ngon, hard, integration (26 of 26), surfaces, zones, guides, head pass; an operator remesh on Test Object Ver-04 at 30K calls the relaxation
 - 0.18.2: all Blender and Python suites pass (hard, integration 26 of 26, surfaces, bevel, forge, form_detail, zone_detail, zones, guides, head, preview, subdiv, uv, vgzones, surface, ui, ngon, relax, row_fit; matrix quick set 23 of 23); CAD battery at 30K, no symmetry: 8 of 8 real parts and 20 of 20 synthetic parts
@@ -16,6 +18,25 @@ See `EXPERIMENT_LOG.md` for the short list of what was tried, kept and rejected.
 - FORGE engine (Linux): sphere, torus, box with 12 exact hard edges, hemisphere with border, cylinder, density (length ratio 2.99 vs 3 requested), meshes with defects, 120 random cases with no failures, 1.3 M tris → 40 K in ~7 s (peak ~390 MB).
 - Python backend with the real engine through a simulated mesh.
 - Windows and macOS binaries are built natively by CI and pass the engine tests there; real-machine use is still limited.
+
+## Battery with the patch criterion (0.18.12, Precise, no symmetry, 2 cores)
+
+The battery now also fails a part that has a patch of more than 20 untidy faces touching each other, even when the overall share is small.
+
+| Target | Passed | Detail |
+|---|---|---|
+| 20K | 8 of 8 | largest patch 15 faces (Cylinder Ver-01) |
+| 5K | 5 of 8 | patches of 26 (Cylinder Ver-01), 22 (Test Object Ver-01) and 48 (Test Object Ver-04) faces; the earlier 8 of 8 at 5K did not measure patches |
+
+## Speed / Precision (0.18.12), Cylinder Ver-01 / Ver-03 at 30K, symmetry X, 2 cores
+
+| Mode | Ver-01 | Ver-03 | Notes |
+|---|---|---|---|
+| Fast | 13.5 s | 32 s | one pass; Ver-01 keeps a 106-face patch |
+| Balanced | 41 s | 65 s | same meshes as Precise on these parts |
+| Precise | 41 s | 92 s | every corrective rerun |
+
+At 500K (Ver-01, symmetry X, Fast) one pass takes 330 s here, 290 s of it in the engine, so above 100K the engine, not the reruns, sets the time.
 
 ## Long-range battery on the symmetric test parts (0.18.10, 2 CPU cores, `tools/corpus_real`)
 
