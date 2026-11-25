@@ -497,7 +497,8 @@ def _plan_symmetry(proxy_arrays: geo.MeshArrays, source: SourceInfo, settings: R
                 warnings.append(
                     f"The mesh is not symmetric about {sym.AXIS_NAMES[axis]} "
                     f"({match:.0%} of the sampled points match). One half will be discarded "
-                    f"and mirrored, which changes the shape.")
+                    f"and mirrored, which changes the shape. If the shape is not meant to be symmetric, switch Symmetry off: "
+                    f"the result follows the real shape and is faster.")
     return plan
 
 

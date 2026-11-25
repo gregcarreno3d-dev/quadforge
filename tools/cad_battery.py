@@ -36,6 +36,7 @@ CRITERIA = {
     "squeezed_sine": 0.3,
     "max_deviation_diag": 0.005,  # of the bounding-box diagonal
     "count_tolerance": 0.06,
+    "max_flaw_cluster": 20,       # untidy faces touching each other: a visible patch even when the share is tiny
 }
 
 
@@ -185,6 +186,7 @@ def run_part(bpy, pipeline, path, args):
         "flaw_share": round((triangles + squeezed) / n, 4), "triangles": triangles, "squeezed": squeezed, "stretched": stretched_quads(positions, faces),
         "deviation_diag": round(deviation, 5), "count_error": round(abs(len(faces) - args.target) / args.target, 4),
         "open_edges": stats.get("border_edges", 0) + stats.get("non_manifold_edges", 0),
+        "cluster": pipeline._worst_flaw_cluster(mesh)[0],
         "source_closed": source_closed, "seconds": round(seconds, 1),
     }
     problems = []
@@ -194,6 +196,8 @@ def run_part(bpy, pipeline, path, args):
         problems.append("too many triangles")
     if row["flaw_share"] > CRITERIA["max_flaw_share"]:
         problems.append("squeezed quads")
+    if row["cluster"] > CRITERIA["max_flaw_cluster"]:
+        problems.append(f"a patch of {row['cluster']} untidy faces together")
     if row["deviation_diag"] > CRITERIA["max_deviation_diag"]:
         problems.append("moved off the source surface")
     if row["count_error"] > CRITERIA["count_tolerance"]:
@@ -244,7 +248,7 @@ def main():
             row = {"part": os.path.basename(path), "verdict": f"ERROR: {error}"}
         rows.append(row)
         print(f"{row['part']:<28} {row.get('faces', '-'):>7} faces  flaws {100 * row.get('flaw_share', 0):5.2f}%  "
-              f"stretched {row.get('stretched', 0):>5}  "
+              f"stretched {row.get('stretched', 0):>5}  patch {row.get('cluster', 0):>3}  "
               f"dev {100 * row.get('deviation_diag', 0):5.3f}%  {row.get('seconds', '-'):>6}s  {row['verdict']}", flush=True)
     passed = sum(1 for r in rows if r["verdict"] == "PASS")
     print(f"\n{passed} of {len(rows)} parts passed ({100 * passed / len(rows):.0f} %)")
