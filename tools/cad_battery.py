@@ -155,6 +155,7 @@ def run_part(bpy, pipeline, path, args):
     settings.shading = "FLAT"
     settings.quality_attempts = args.attempts
     settings.sym_x = args.sym == "x"
+    settings.quality = args.quality
     if args.no_soft_bevels:
         settings.soft_bevels = False
     if args.no_smooth:
@@ -208,6 +209,7 @@ def main():
     parser.add_argument("--sym", choices=["none", "x"], default="none", help="symmetry on X (default none)")
     parser.add_argument("--attempts", type=int, default=1, help="Quality Attempts (default 1)")
     parser.add_argument("--csv", help="write the table to this CSV file")
+    parser.add_argument("--quality", choices=("FAST", "BALANCED", "PRECISE"), default="PRECISE", help="speed / precision mode (default PRECISE, the long-standing behaviour)")
     parser.add_argument("--no-soft-bevels", action="store_true", help="switch Rounded Bevels off (experiment)")
     parser.add_argument("--no-smooth", action="store_true", help="switch the surface-border majority filter off (experiment)")
     parser.add_argument("--no-join", action="store_true", help="skip the leftover-triangle joining (experiment)")

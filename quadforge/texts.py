@@ -31,7 +31,7 @@ GUIDE_NO_VERTEX_GROUPS = "'By Vertex Group' is on, but this mesh has no vertex g
 # ---------------------------------------------------------------- main panel
 LABEL_QUICK_PRESETS = "Quick presets (set target and angle in one click)"
 LABEL_SURFACE = "Surface type (sets the options for you)"
-LABEL_HEAVY_TARGET = "Large target: slow and heavy on memory."
+LABEL_HEAVY_TARGET = "Large target: slow and heavy on memory. Use Fast for the quickest result."
 LABEL_EXACT_NUMBER = "Exact number"
 LABEL_ACTIVE_OPTIONS = "Active options: {options}"
 LABEL_NO_OPTIONS = "none (only the target count)"

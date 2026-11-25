@@ -420,3 +420,7 @@ with Blender 5.2; the add-on declares Blender 4.2+.
 on the working mesh before calling `remesh_steps(context, obj, request)`.
 
 **How do I add UI text?** A constant in `texts.py`; optional Spanish entry in `translations.py`.
+
+
+## Speed / Precision (unreleased after 0.18.11)
+`RemeshSettings.quality` (FAST | BALANCED | PRECISE; UI property `remesh_quality`, default BALANCED; dataclass default PRECISE) gates the corrective reruns in `pipeline.run_steps`. The gate is by target size and flaw share, never by elapsed time, so results stay deterministic across machines.

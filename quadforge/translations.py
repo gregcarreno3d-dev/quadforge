@@ -33,7 +33,7 @@ SPANISH_FROM_TEXTS = {
     texts.GUIDE_NO_MASK: "'Por máscara de sculpt' está activo, pero esta malla no tiene máscara de sculpt.",
 
     texts.LABEL_SURFACE: "Tipo de superficie (configura las opciones por ti)",
-    texts.LABEL_HEAVY_TARGET: "Objetivo grande: lento y pesado en memoria.",
+    texts.LABEL_HEAVY_TARGET: "Objetivo grande: lento y pesado en memoria. Usa Fast para el resultado más rápido.",
     texts.LABEL_EXACT_NUMBER: "Número exacto",
     "Hard Surface": "Superficie dura",
     "Soft Surface / Organic": "Superficie blanda / Orgánica",

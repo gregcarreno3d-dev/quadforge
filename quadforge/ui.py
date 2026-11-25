@@ -197,6 +197,7 @@ class QUADFORGE_PT_main(_QuadForgePanel, bpy.types.Panel):
 
         layout.separator()
         layout.row().prop(settings, "output_type", expand=True)
+        layout.row().prop(settings, "remesh_quality", expand=True)
 
         remesh_row = layout.row()
         remesh_row.scale_y = 1.6

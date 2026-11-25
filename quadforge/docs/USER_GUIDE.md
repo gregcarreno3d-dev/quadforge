@@ -22,6 +22,7 @@ The panel changes with the surface button you press, so you only see the setting
 |---|---|
 | **Engine** | *FORGE*, the add-on's own engine (quads or triangles, reads heavy sculpts directly, paintable density). It is the only engine. |
 | **Output** (FORGE only) | *Quads* (animation, subdivision, sculpting) or *Triangles* (games, 3D printing, simulation; even, well-shaped triangles). |
+| **Speed / Precision** (0.18.12) | *Fast*: one pass, no corrective reruns (quickest; may keep a few untidy faces). *Balanced* (default): cheap corrective reruns up to 100K faces and only when more than 0.5 % of the faces are flawed; none above. *Precise*: every corrective rerun, including the slow finer-strips one. Measured at 30K (Cylinder Ver-01 / Ver-03, symmetry X, 2 cores): Fast 13.5 s / 32 s, Balanced 41 s / 65 s, Precise 41 s / 92 s. |
 | **Target Faces** | Approximate face count of the result (the real count varies by a few percent). |
 | **Surface type** | Hard Surface: hard edges from 30°, right angles and snapping on, Detail on Curves Off. Soft Surface / Organic: hard-edge detection off (your own sharp edges and seams still count), Detail on Curves Medium. Neither touches symmetry, zones, output or engine. Changing one of those values by hand unmarks the button. |
 | **Target Faces** | A list from 2K to 500K (above 150K it is slow and heavy) plus an exact-number field. The Ladder 20K→4K button is in Extra Levels. |

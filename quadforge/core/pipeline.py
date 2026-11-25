@@ -109,6 +109,7 @@ class RemeshSettings:
     relax_quads: bool = True         # even out badly shaped quads and put them back on the surface
     row_fit: bool = False                    # size chamfer / bevel strips so a whole number of rows fits (core/row_fit.py)
     soft_bevel_detail: float = 0.5           # edge length multiplier on the facets of rounded bevels (1 = no refinement)
+    quality: str = "PRECISE"                 # FAST | BALANCED | PRECISE: how many corrective reruns run_steps may spend (see QUALITY_*)
     thin_band_floor: float = 0.0             # internal: finest size multiplier of thin strips (0 = the default floors); set by the rerun
     use_seams: bool = True
     smart_features: bool = True      # judge whole chains of sharp edges, not single edges
@@ -735,6 +736,8 @@ FINAL_COUNT_RETRY = 0.05                            # one corrected rerun when t
 STRETCHED_QUAD_RATIO = 5.0                         # a quad whose longest edge is more than this many times its shortest is a flaw
 SEAM_CORNER_MIN_SINE = 0.005                        # a corner on the symmetry plane is dissolved even into a thin sliver (a vertex with two edges on the seam is worse)
 PLAIN_RETRY_FLAW_SHARE = 0.01                       # Hard Surface: more flaws than this (or a cluster) gets a rerun without strip refinement
+QUALITY_BALANCED_MAX_FACES = 100_000                # Balanced: corrective reruns only up to this target (a rerun of a big mesh costs minutes for a few dozen faces)
+QUALITY_BALANCED_FLAW_SHARE = 0.005                 # Balanced: and only when more than this share of the faces is a flaw
 COUNT_TOLERANCE = 0.06                             # the engine itself lands within 4 to 6 percent: only beyond that is a count penalised
 
 
@@ -1456,9 +1459,18 @@ def run_steps(context, original, settings: RemeshSettings,
     target = settings.target_quads
     best, floor = result, 0.0
     count_tried = fine_tried = plain_tried = rigid_tried = kept_cheap = False
+    quality = getattr(settings, "quality", "PRECISE")
+    if quality == "FAST":
+        return result                           # one pass, no corrective reruns: the quickest result
+    if quality == "BALANCED":
+        fine_tried = True                       # the slow finer-strips rerun is only for Precise
+        if target > QUALITY_BALANCED_MAX_FACES:
+            return result
     while True:
         first = best.levels[0]
         faces = len(first.object.data.polygons)
+        if quality == "BALANCED" and _layout_flaws(first.object.data) / max(1, faces) <= QUALITY_BALANCED_FLAW_SHARE:
+            plain_tried = rigid_tried = True    # too few flaws to be worth a rerun
         if not count_tried and abs(faces - target) / target > FINAL_COUNT_RETRY:
             count_tried = True
             requested = max(1000, round(target * (0.5 + 0.5 * target / max(1, faces))))

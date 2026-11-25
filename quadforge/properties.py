@@ -99,6 +99,18 @@ class QuadForgeProperties(bpy.types.PropertyGroup):
         default=True,
     )
 
+    remesh_quality: EnumProperty(
+        name="Speed / Precision",
+        description="How much extra work is spent tidying the result. Fast: one pass, the quickest. Balanced: corrective "
+                    "reruns on meshes up to 100K faces when there are flaws. Precise: every corrective rerun, even slow ones",
+        items=[
+            ("FAST", "Fast", "One pass, no corrective reruns: the quickest result, may keep a few untidy faces"),
+            ("BALANCED", "Balanced", "Cheap corrective reruns up to 100K faces, none above"),
+            ("PRECISE", "Precise", "Every corrective rerun, including the slow finer-strips one: slowest, cleanest"),
+        ],
+        default="BALANCED",
+    )
+
     curvature_detail: EnumProperty(
         update=_unmark_surface,
         name="Detail on Curves",
@@ -363,6 +375,7 @@ class QuadForgeProperties(bpy.types.PropertyGroup):
             density_ratio=self.density_ratio,
             zone_factors={item.name: item.factor for item in self.zone_factors if abs(item.factor - 1.0) > 1e-6},
             curvature_detail=self.curvature_detail,
+            quality=self.remesh_quality,
             use_flow_guides=self.use_flow_guides,
             subdivision_match=self.subdivision_match,
             use_sharp_angle=self.use_sharp_angle,

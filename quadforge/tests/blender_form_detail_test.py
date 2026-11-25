@@ -82,6 +82,11 @@ check("bumped area is red, flat area is blue", red.max() > 0.8 and red.min() < 0
 sphere_obj = bpy.context.active_object
 bpy.ops.object.mode_set(mode="EDIT")
 bpy.ops.object.mode_set(mode="OBJECT")
+qsettings = bpy.context.scene.quadforge
+check("Speed / Precision defaults to Balanced", qsettings.remesh_quality == "BALANCED" and qsettings.to_settings().quality == "BALANCED")
+qsettings.remesh_quality = "FAST"
+check("Speed / Precision reaches the pipeline settings", qsettings.to_settings().quality == "FAST")
+qsettings.remesh_quality = "BALANCED"
 check("Analyze Form colours survive an Edit Mode round trip", sphere.color_attributes.get("QuadForge Form Colours") is not None)
 check("Analyze Form writes an editable vertex group", sphere_obj.vertex_groups.get("QuadForge Form") is not None)
 check("Analyze Form does not change the mesh", len(sphere.polygons) == faces_before)

@@ -2,6 +2,7 @@
 
 ## Unreleased (next)
 
+- **Speed / Precision selector (Fast / Balanced / Precise).** Remeshing a big mesh took minutes because the corrective reruns (count, plain sizes, rigid, finer strips) ran on every result with flaws (Cylinder Ver-01 at 500K: 248 s). *Fast* skips them, *Balanced* (default in the panel) runs only the cheap ones up to 100K faces and only above 0.5 % flaws, *Precise* keeps the old behaviour. The engine-level default (`RemeshSettings.quality`) stays PRECISE so the batteries are unchanged; `cad_battery.py --quality`. Large-target hint now mentions Fast. Measured at 30K, symmetry X: Ver-01 13.5 / 41 / 41 s, Ver-03 32 / 65 / 92 s (Fast / Balanced / Precise); Balanced gives the same meshes as Precise there.
 - Open work: green tooth on the rounded end of Test Object Ver-04, one-surface fit of rounded ends, seam triangles of Ver-04 with symmetry X (0.2 %), 1.5K quads on detailed parts (4 of 8), a Soft Surface curvature mask that does better than Detail on Curves (see `docs/EXPERIMENT_LOG.md`), Windows/macOS validation (see `docs/STATUS_AND_LIMITS.md`).
 
 ## 0.18.11 — 2026-11-24
