@@ -1,4 +1,4 @@
-# User guide — QuadForge 0.18.11
+# User guide — QuadForge 0.18.12
 
 ## 1. Basic flow (3 steps)
 1. Select the mesh (triangles or quads, any density). The add-on switches to Object Mode by itself.
