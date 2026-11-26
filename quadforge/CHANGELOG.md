@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.18.14 — 2026-11-26
+
+- **Detail on Curves, finer detail:** the mask now looks at three scales (one, two and three quad lengths) and keeps the strongest, so features about one quad wide (fangs, eyelids, scales, teeth) are no longer averaged away by the wide patch. Analyze Form paints the same mask. Measured on a synthetic creature at 5K: detail lost on the curved areas with High 1.01 to 0.92 %.
+- **Gentler retry instead of the pairing fallback:** when the grid method gives up because the size variation is too strong (the dragon at 30K with symmetry X, 0.18.13: irregular quads, non-manifold edges, fine detail lost), the pipeline now retries with half and then a quarter of the density variation and keeps the first grid result; the Last Result panel says how much of Detail on Curves was kept.
+- Tests: multi-scale spike and gentle-retry checks in `blender_form_detail_test.py`.
+- Not changed: raising the ratio above High does not help at a fixed face count (measured), so the finer detail on a 30K target is limited by the budget: use a higher target or paint a Density group on eyes and teeth (Analyze Form makes the group to start from).
+
 ## 0.18.13 — 2026-11-25
 
 Validation round (no change to the remeshing result): battery with the patch criterion, 20K Balanced 8 of 8 (largest patch 15), Blender tests (form detail, UI, integration 26/26, FORGE) all passing. 5K Precise still has three parts over the patch limit (Ver-04 48, Ver-01 26, Test Ver-01 22); Ver-04 is the boss-to-grid transition described below and needs engine work.

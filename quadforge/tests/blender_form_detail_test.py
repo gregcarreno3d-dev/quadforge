@@ -93,6 +93,62 @@ check("Analyze Form does not change the mesh", len(sphere.polygons) == faces_bef
 bpy.context.scene.quadforge.curvature_detail = "OFF"
 check("Analyze Form with Detail Off is refused", bpy.ops.quadforge.analyze_form() == {"CANCELLED"})
 
+# multi-scale mask: a spike about one quad wide (a fang, a tooth) gets the finest faces even though a wide patch averages it out
+spike_bm = bmesh.new()
+bmesh.ops.create_grid(spike_bm, x_segments=150, y_segments=150, size=1.0)
+for vertex in spike_bm.verts:
+    vertex.co.z = 0.10 * np.exp(-((vertex.co.x ** 2 + vertex.co.y ** 2) / 0.0006))
+spike = bpy.data.meshes.new("spike")
+spike_bm.to_mesh(spike)
+spike_bm.free()
+spike_multiplier = form_detail.form_multiplier(spike, 1500, 3.5)
+spike_x = np.array([v.co.x for v in spike.vertices])
+spike_y = np.array([v.co.y for v in spike.vertices])
+tip = spike_multiplier[(spike_x ** 2 + spike_y ** 2) < 0.03 ** 2]
+check("a one-quad spike gets the finest faces", float(tip.min()) < 1.0 / 3.0, f"{tip.min():.3f}")
+check("flat area around the spike stays at 1", float(spike_multiplier[(spike_x ** 2 + spike_y ** 2) > 0.5 ** 2].mean()) > 0.99)
+
+# the grid method cannot always follow the density: the pipeline retries with part of it instead of the pairing method
+from quadforge.core.backends import forge as forge_backend  # noqa: E402
+real_backend = pipeline.get_backend
+calls = []
+
+
+class PairOnce:
+    def __init__(self, backend):
+        self.backend = backend
+
+    def remesh_steps(self, context, work_object, request):
+        yield from self.backend.remesh_steps(context, work_object, request)
+        calls.append(1)
+        if len(calls) == 1:
+            request.engine_info["method"] = "pair"
+            request.engine_info["fallback"] = "the size variation is too strong for a regular grid on this shape"
+        else:
+            request.engine_info["method"] = "grid"
+
+    def __getattr__(self, name):
+        return getattr(self.backend, name)
+
+
+pipeline.get_backend = lambda: PairOnce(real_backend())
+retry_settings = pipeline.RemeshSettings()
+retry_settings.output = "QUADS"
+retry_settings.target_quads = 1500
+from quadforge import presets  # noqa: E402
+for name, value in presets.SURFACE_PROFILES["ORGANIC"].values.items():
+    if hasattr(retry_settings, name):
+        setattr(retry_settings, name, value)
+retry_settings.curvature_detail = "HIGH"
+retry_settings.target_quads = 1500
+retry_settings.hide_original = False
+try:
+    retry_result = pipeline.run(bpy.context, obj, retry_settings)
+finally:
+    pipeline.get_backend = real_backend
+check("pairing fallback on size variation triggers a gentler retry", len(calls) == 2, f"{len(calls)} engine runs")
+check("the retry is reported", any("softened" in w for w in retry_result.warnings))
+
 # the cleanup restores a flipped face next to its neighbour (a slit sewn together can leave one)
 bm = bmesh.new()
 bmesh.ops.create_grid(bm, x_segments=3, y_segments=3, size=1.0)

@@ -1,6 +1,6 @@
 # QuadForge: architecture and behaviour, written for AI assistants
 
-Version described: **0.18.13** (FORGE engine in Rust since 0.15.0; chamfer/bevel detector since 0.15.1; whole-model surface analysis since 0.16.0). Licence: GPL-3.0-or-later. Everything here was checked against the code in this
+Version described: **0.18.14** (FORGE engine in Rust since 0.15.0; chamfer/bevel detector since 0.15.1; whole-model surface analysis since 0.16.0). Licence: GPL-3.0-or-later. Everything here was checked against the code in this
 repository. If this file and the code disagree, **the code wins**; please fix this file.
 
 This document is meant to be loaded whole into a model's context. It is dense and flat on purpose: sections are
@@ -129,12 +129,14 @@ HIGH: 0.15}` radians, `ENGINE_TIMEOUT_SECONDS = 3 h` (a safety net in `backends/
 ### 2.3 Detail on Curves (`core/form_detail.py`) and its old safeguard (in `backends/forge.py`)
 
 Since 0.16.9 Detail on Curves no longer uses the engine's `--curv-adapt`. `form_detail.form_multiplier`
-averages the vertex normals over a patch about three quad lengths wide (numpy diffusion over the mesh edges, no scipy), takes
-`1 - |mean normal|` as the bend at that scale, and turns it into the edge-length multiplier of the `quadforge_density`
+averages the vertex normals over patches one, two and three quad lengths wide (`SCALES`; numpy diffusion over the mesh edges, no scipy, one pass that keeps diffusing), takes
+`1 - |mean normal|` as the bend at each scale, normalises each scale by its own percentiles and keeps the largest weight (since 0.18.14 the one-quad scale catches fangs, eyelids and scales that a wide patch averages out), and turns it into the edge-length multiplier of the `quadforge_density`
 attribute (1 on the flatter half of the vertices, `1 / ratio` from the 97th percentile up; ratios LOW 1.8, MEDIUM 2.5,
 HIGH 3.5, `FORM_DETAIL_RATIOS` in `pipeline.py`; with symmetry the excess over 1 is halved, `FORM_DETAIL_SYMMETRY_SHARE`, because
 a strong gradient next to the cut leaves seam corners). The engine then gets `curv_angle = 0`. The safeguard below stays for
 anyone who calls the backend with `curv_angle` directly.
+
+Since 0.18.14 `_run_engine_step` also retries when the grid method gives up on the density: if the engine reports `method == "pair"` with a fallback reason containing "size variation" and the mesh carries `quadforge_density`, it runs again with `1 + (density - 1) * share` for `DENSITY_SOFTEN_STEPS` (0.5, then 0.25) and keeps the first grid result, with a warning that says how much of Detail on Curves was kept. Without it the pairing path loses the fine detail (the dragon at 30K with symmetry X, 0.18.13).
 
 If Detail on Curves is on, output is QUADS and the result has at least 5,000 vertices, and more than 0.9 % of the
 vertices are irregular (`CURVATURE_RETRY_FRACTION = 0.009`), the backend runs the engine a second time without it and

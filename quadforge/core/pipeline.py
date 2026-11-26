@@ -72,6 +72,7 @@ SYMMETRY_MATCH_WARNING_THRESHOLD = 0.9    # warn if fewer than 90% of sampled po
 WORK_OBJECT_NAME = "QuadForge_work"
 DENSITY_ATTRIBUTE = "quadforge_density"
 FORM_DETAIL_RATIOS = {"LOW": 1.8, "MEDIUM": 2.5, "HIGH": 3.5}   # Detail on Curves: edge length ratio between flat and sharply bent areas
+DENSITY_SOFTEN_STEPS = (0.5, 0.25)                                      # share of the density variation kept when the grid cannot follow it
 FORM_DETAIL_SYMMETRY_SHARE = 0.75                                      # with symmetry the Detail on Curves ratio is reduced to this share of its excess over 1
 CURVATURE_ANGLES = {"OFF": 0.0, "LOW": 0.35, "MEDIUM": 0.22, "HIGH": 0.15}   # radians a face edge may turn the surface
 
@@ -859,6 +860,9 @@ def _remesh_once(context, mesh, plan: sym.SymmetryPlan, settings: RemeshSettings
     )
 
     keep_input = mesh.copy() if (settings.output == "QUADS" and request.preserve_sharp) else None
+    softenable = (settings.output == "QUADS" and keep_input is None and mesh.attributes.get(DENSITY_ATTRIBUTE) is not None)
+    soft_input = mesh.copy() if softenable else None     # to retry with a gentler density if the grid cannot follow it
+    soft_levels = []
     work_object = bpy.data.objects.new(WORK_OBJECT_NAME, mesh)
     context.scene.collection.objects.link(work_object)
     try:
@@ -877,6 +881,24 @@ def _remesh_once(context, mesh, plan: sym.SymmetryPlan, settings: RemeshSettings
                     if discarded is not mesh and discarded.users == 0:
                         bpy.data.meshes.remove(discarded)
                     yield from get_backend().remesh_steps(context, work_object, request)
+            if soft_input is not None and (request.engine_info or {}).get("method") == "pair" \
+                    and "size variation" in str(request.engine_info.get("fallback", "")):
+                # Detail on Curves asked for more size variation than a regular grid can follow on this shape, and the
+                # engine fell back to the pairing method (irregular, loses fine detail). Follow only part of the variation.
+                base = np.empty(len(soft_input.vertices), dtype=np.float32)
+                soft_input.attributes[DENSITY_ATTRIBUTE].data.foreach_get("value", base)
+                for share in DENSITY_SOFTEN_STEPS:
+                    trial = soft_input.copy()
+                    trial.attributes[DENSITY_ATTRIBUTE].data.foreach_set("value", (1.0 + (base - 1.0) * share).astype(np.float32))
+                    request.engine_info.clear()
+                    discarded = work_object.data
+                    work_object.data = trial
+                    if discarded is not mesh and discarded.users == 0:
+                        bpy.data.meshes.remove(discarded)
+                    yield from get_backend().remesh_steps(context, work_object, request)
+                    soft_levels.append(share)
+                    if (request.engine_info or {}).get("method") != "pair":
+                        break
             if keep_input is not None:
                 vanished = _collapse_slivers(work_object.data)
                 if vanished < 0.0:
@@ -906,6 +928,9 @@ def _remesh_once(context, mesh, plan: sym.SymmetryPlan, settings: RemeshSettings
             times = max(1, round(with_curves / max(1, without)))
             warnings.append(f"Detail on Curves was left out for this shape: it made the flow about {times}x more irregular "
                             "(many extra poles). Mechanical shapes do better with Detail on Curves Off.")
+        if warnings is not None and soft_levels and info.get("method") != "pair":
+            warnings.append(f"Detail on Curves was softened to {round(100 * soft_levels[-1])} % of its strength for this shape: at full "
+                            "strength the grid method could not follow it and the engine would have used the irregular pairing method.")
         if warnings is not None and settings.output == "QUADS" and info.get("method") == "pair":
             reason = info.get("fallback") or "unknown"
             warnings.append(

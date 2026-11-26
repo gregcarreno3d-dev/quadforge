@@ -10,7 +10,8 @@ Numpy only (Blender's Python has no scipy). The result is written to the ``quadf
 """
 import numpy as np
 
-SMOOTH_SCALE = 3.0        # the averaging patch is this many quad lengths wide (a wider patch makes a gentler gradient)
+SCALES = (1.0, 2.0, 3.0)  # averaging patch widths in quad lengths: the small one catches features about one quad wide
+                          # (fangs, eyelids, scales), the large one the gentle bends and a smooth gradient
 MAX_STEPS = 450           # diffusion steps (a huge mesh with tiny quads is capped: the effect only gets a little wider)
 LOW_PERCENTILE = 50.0     # vertices at or below this bend are left at the normal size
 HIGH_PERCENTILE = 97.0    # vertices at or above this bend get the full ratio
@@ -49,10 +50,15 @@ def form_multiplier(mesh, target_faces: int, ratio: float) -> np.ndarray:
     edge_length = float(np.median(np.linalg.norm(positions[first] - positions[second], axis=1)))
     if edge_length <= 0.0:
         return np.ones(count)
-    steps = int(min(MAX_STEPS, max(1, round((SMOOTH_SCALE * quad_length / edge_length) ** 2))))
-    degree = np.bincount(first, minlength=count) + np.bincount(second, minlength=count)
-    averaged = _diffuse(normals.astype(np.float64), first, second, degree.astype(np.float64), steps)
-    bend = 1.0 - np.linalg.norm(averaged, axis=1)
-    low, high = np.percentile(bend, [LOW_PERCENTILE, HIGH_PERCENTILE])
-    weight = np.clip((bend - low) / max(high - low, 1e-12), 0.0, 1.0)
+    degree = (np.bincount(first, minlength=count) + np.bincount(second, minlength=count)).astype(np.float64)
+    averaged = normals.astype(np.float64)
+    done = 0
+    weight = np.zeros(count)
+    for scale in SCALES:
+        steps = int(min(MAX_STEPS, max(1, round((scale * quad_length / edge_length) ** 2))))
+        averaged = _diffuse(averaged, first, second, degree, max(0, steps - done))
+        done = max(done, steps)
+        bend = 1.0 - np.linalg.norm(averaged, axis=1)
+        low, high = np.percentile(bend, [LOW_PERCENTILE, HIGH_PERCENTILE])
+        weight = np.maximum(weight, np.clip((bend - low) / max(high - low, 1e-12), 0.0, 1.0))
     return 1.0 / (1.0 + (ratio - 1.0) * weight)
