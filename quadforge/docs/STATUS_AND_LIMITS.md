@@ -2,12 +2,13 @@
 
 See `EXPERIMENT_LOG.md` for the short list of what was tried, kept and rejected.
 
-## Current status (0.18.14)
+## Current status (0.18.15)
 - **Surface analysis and chamfer/bevel detection (preview).** Tested on real CAD parts (a cylinder plate, a perforated plate, a flange, a spool-like part) and on synthetic parts (prisms, frustums, a tilted frustum, a UV sphere, a bracket with a tilted hole, a six-hole flange, a dome, a cone on a cylinder, an off-centre boss). Unit tests live in `engine-rs/src/stages/surfaces.rs`; the Blender test is `tests/blender_surfaces_test.py`.
 - **Known limits of the analysis:** surfaces of revolution are searched only about the X, Y and Z axes through the centre of the model; fillets made of very thin facets and coarse 3-facet fillets are only partly detected; with *Use Surface Analysis* about 2 % of the faces can stay triangles (isolated ones in the quad flow); the detector is in the Linux engine checked into the repository, and in Windows / macOS builds made by CI.
 - **Speed on CAD parts:** a plate with a strong size variation falls back after the second attempt (about 12 s instead of 26 s at 4K quads).
 
 ## Tested
+- 0.18.15: Greg's real dragon head (889K triangles) and helmet (402K), 30K, symmetry X, Detail Medium. Dragon: 0.18.14 still fell to the pairing method (109.6 poles per 1,000, 1.36 % bad quads, 99.1 % quads); with the retry fixed it uses the grid at 50 % of Detail on Curves: 34.2 poles per 1,000, 0.20 % bad quads, 99.9 % quads, no non-manifold edges. Helmet: 100 % quads, 7.1 poles per 1,000, 0.01 % bad. Both still fail the detail check (dragon 1.44 %, helmet 1.80 % lost on the curved 10 %) because the sculpts are not symmetric and symmetry X mirrors one half; switch Symmetry off for the real shape.
 - 0.18.14: form_detail suite (multi-scale mask on a one-quad spike, gentler retry after a pairing fallback), integration 26/26, UI and zone-detail suites pass. On a synthetic creature (fangs, horns, eye ridges, teeth, scales; 82K triangles) at 5K, no symmetry: Detail High loses 0.92 % of the diagonal on the curved 10 % (was 1.01), Medium 1.20 (was 1.14), Off 3.69. A stronger ratio does not help at a fixed face count (ratio 5: 1.87, ratio 7: 1.35). Not measured on the real dragon (the sculpt is not in the repository): Greg to confirm.
 - 0.18.13: validation round: 20K battery 8 of 8 (Balanced), Blender form_detail, UI, integration (26/26) and FORGE suites pass. 5K Precise: 5 of 8 (patch criterion), see below.
 - 0.18.12: Blender form_detail (Analyze Form colours survive an Edit Mode round trip; Speed / Precision default and pass-through), pinch and surfaces suites pass; CI green on Linux, Windows, macOS x64 and Blender 4.2 / 4.5 / 5.1 (macOS arm64 runners were cancelled for capacity several times).

@@ -860,7 +860,7 @@ def _remesh_once(context, mesh, plan: sym.SymmetryPlan, settings: RemeshSettings
     )
 
     keep_input = mesh.copy() if (settings.output == "QUADS" and request.preserve_sharp) else None
-    softenable = (settings.output == "QUADS" and keep_input is None and mesh.attributes.get(DENSITY_ATTRIBUTE) is not None)
+    softenable = (settings.output == "QUADS" and mesh.attributes.get(DENSITY_ATTRIBUTE) is not None)
     soft_input = mesh.copy() if softenable else None     # to retry with a gentler density if the grid cannot follow it
     soft_levels = []
     work_object = bpy.data.objects.new(WORK_OBJECT_NAME, mesh)

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.18.15 — 2026-11-27
+
+- **Fix: the gentler retry of 0.18.14 never ran on the real dragon.** It was skipped whenever the mesh carried a sharp-edge layer (a sculpt imported from FBX does), so the pairing fallback stayed. It now runs for every Soft/Quads remesh that has a Detail on Curves density. Measured on the dragon head at 30K, symmetry X, Medium: poles per 1,000 109.6 to 34.2, bad quads 1.36 % to 0.20 %, quads 99.1 % to 99.9 %, grid method at 50 % of Detail.
+
 ## 0.18.14 — 2026-11-26
 
 - **Detail on Curves, finer detail:** the mask now looks at three scales (one, two and three quad lengths) and keeps the strongest, so features about one quad wide (fangs, eyelids, scales, teeth) are no longer averaged away by the wide patch. Analyze Form paints the same mask. Measured on a synthetic creature at 5K: detail lost on the curved areas with High 1.01 to 0.92 %.
